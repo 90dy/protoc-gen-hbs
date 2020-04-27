@@ -1,0 +1,10 @@
+{{#*inline "message"}}
+CREATE TABLE {{name}} {
+	{{#each field}}
+	{{/each}}
+};
+{{/inline}}
+
+{{#> message}}
+
+{{/message}}

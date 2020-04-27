@@ -1,0 +1,13 @@
+{
+	{{#package}}
+	"{{name}}": {
+		{{#message}}
+		"{{name}}": {
+			{{#field}}
+			"{{name}}": {{type.name}},
+			{{/field}}
+		},
+		{{/message}}
+	},
+	{{/package}}
+}
