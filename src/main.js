@@ -32,6 +32,14 @@ withAllStdIn((inputBufff: Buffer) => {
 			codeGenResponse.addFile(sqlFile);
 		})
 
+		const fileToGenerateList = codeGenRequest.getFileToGenerateList().map(fileName => {
+			// TODO: generate custom filename via hbs
+		})
+
+		// TODO: for each file merge file descriptor
+
+		// TODO: for each file compile handlebars with helpers
+
 		process.stdout.write(Buffer.from(codeGenResponse.serializeBinary()))
 	} catch (error) {
 		console.error("protoc-gen-hbs error: " + err.stack + "\n")
