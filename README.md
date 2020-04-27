@@ -21,7 +21,7 @@ This is why this project exists.
 
 ## Installation
 
-First, install [protoc](http://google.github.io/proto-lens/installing-protoc.html)
+First, install protoc: http://google.github.io/proto-lens/installing-protoc.html
 
 Then type:
 
@@ -41,13 +41,16 @@ npm install --global protoc-gen-hbs
 protoc --hbs_out="." [-I<proto_paths>...] <proto_files>...
 ```
 
+## Contributing
+
+Make PRs and have fun 👻
+
 ## Helpers
 
 * Helpers creates inline partials ([see also](https://handlebarsjs.com/guide/partials.html))
 * You can use either `{{#name-of-helper}}` and `{{#*inline "name-of-helper"}}`
 * Helpers can take a string argument to filter them
-* Helper used inside another helper will be available inside current scope only
-* If you set `{{> @partial-block}}` inside it will add nested partial automatically
+* Nested helpers will be available inside current scope only
 
 ### [{{import}}](src/import.js)
 
