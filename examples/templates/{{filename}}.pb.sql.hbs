@@ -1,10 +1,20 @@
-{{#*inline "message"}}
-CREATE TABLE {{name}} {
-	{{#each field}}
-	{{/each}}
+{{#*inline "table"}}
+CREATE TABLE {{snake name}} {
+	{{> @partial-block}}
 };
 {{/inline}}
 
-{{#> message}}
+{{#*inline "column"}}
+CREATE COLUMN {{snake name}} {{> #partial-block}};
+{{/inline}}
 
+{{#message}}
+	{{#> table}}
+		{{#field}}
+			{{#> column}}
+				{{#scalar "string"}}VARCHAR{{/scalar}}
+				{{#scalar "uint32" "fixed32"}}INT{{/scalar}}
+			{{/column}}
+		{{/field}}
+	{{/table}}
 {{/message}}
