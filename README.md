@@ -1,6 +1,6 @@
 # protoc-gen-hbs
 
-🏃‍♀️ Fast and simple protobuf generation with handlebars (and some helpers)
+🏃‍♀️ Fast and simple protobuf generation with handlebars and some helpers
 
 ## Why ?
 
@@ -16,7 +16,7 @@ This is why this project exists.
 
 * Simple and understable templates
 * Less configs as possible
-* Knowing how protobuf descriptors are structured is useless
+* Knowing how protobuf descriptors are structured must be useless
 * Make protobuf developpers happy :smile:
 
 ## Installation
@@ -37,30 +37,39 @@ npm install --global protoc-gen-hbs
 
 ## Usage
 
+### CLI
+
 ```
 protoc --hbs_out="." [-I<proto_paths>...] <proto_files>...
 ```
 
-## Contributing
+### Template
 
-Make PRs and have fun 👻
+* Template file name can be of the form:
+	* `whatever.hbs` to aggregate every proto file
+	* `{{filename}}.ext.hbs` to generate one file by proto file
+	* `{{package}}.ext.hbs` to generate one file by package
+	* `{{#whatever}}{{/whatever}}.hbs` is not really recommended, but if needed, use encodeURI over it for your file system
+* Each template get CodeGeneratorRequest as input with:
+	* all file descriptors from input and imported (as protoc does with plugins)
+	* list only the current proto file used for the template in `file_to_generate`
+	* For more information look at [CodeGeneratorRequest](https://github.com/protocolbuffers/protobuf/blob/4059c61f27eb1b06c4ee979546a238be792df0a4/src/google/protobuf/compiler/plugin.proto#L68) and [FileDescriptorProto]((https://github.com/protocolbuffers/protobuf/blob/4059c61f27eb1b06c4ee979546a238be792df0a4/src/google/protobuf/descriptor.proto#L62)
 
-## Helpers
+### Helpers
 
-* Helpers creates inline partials ([see also](https://handlebarsjs.com/guide/partials.html))
-* You can use either `{{#name-of-helper}}` and `{{#*inline "name-of-helper"}}`
-* Helpers can take a string argument to filter them
-* Nested helpers will be available inside current scope only
+* Helpers can take a string argument to filter the descriptors used
+* Nested helpers override others inside current scope
+* For helpers not related with protobuf, all [handlebars-helpers](helpers/handlebars-helpers), are included
 
-### [{{import}}](src/import.js)
+#### [{{import}}](src/import.js)
 
 ```handlebars
 {{#import}}
-include "{{stem name}}.pb.h"
+include "{{name}}.pb.h"
 {{/import}}
 ```
 
-### [{{package}}](src/package.js)
+#### [{{package}}](src/package.js)
 
 ```handlebars
 {{#package}}
@@ -75,7 +84,7 @@ namespace {{name}} {
 {{/package}}
 ```
 
-### [{{message}}](src/message.js)
+#### [{{message}}](src/message.js)
 
 ```handlebars
 {{#message}}
@@ -87,7 +96,7 @@ class {{name}} extends DateTime {}
 {{/message}}
 ```
 
-### [{{field}}](src/field.js)
+#### [{{field}}](src/field.js)
 
 ```handlebars
 {{#field}}
@@ -95,7 +104,7 @@ class {{name}} extends DateTime {}
 {{/field}}
 ```
 
-### [{{enum}}](src/enum.js)
+#### [{{enum}}](src/enum.js)
 
 ```handlebars
 {{#enum}}
@@ -105,7 +114,7 @@ enum {{name}} {
 {{/enum}}
 ```
 
-### [{{scalar}}](src/scalar.js)
+#### [{{scalar}}](src/scalar.js)
 
 ```handlebars
 {{#scalar}}
@@ -115,7 +124,7 @@ enum {{name}} {
 {{/scalar}}
 ```
 
-### [{{service}}](src/service.js)
+#### [{{service}}](src/service.js)
 
 ```handlebars
 {{#service}}
@@ -125,13 +134,17 @@ interface {{name}} {
 {{/service}}
 ```
 
-### [{{rpc}}](src/rpc.js)
+#### [{{rpc}}](src/rpc.js)
 
 ```handlebars
 {{#rpc}}
 {{name}}(request: {{request}}) -> {{response}}
 {{/rpc}}
 ```
+
+## Contributing
+
+Make PRs and have fun 👻
 
 ## Examples
 
