@@ -1,13 +1,8 @@
 {
-	{{#package}}
-	"{{name}}": {
-		{{#message}}
-		"{{name}}": {
-			{{#field}}
-			"{{name}}": {{type.name}},
+	{{#> package}}
+		{{#> message}}
+			{{#> field}}
 			{{/field}}
-		},
 		{{/message}}
-	},
 	{{/package}}
 }

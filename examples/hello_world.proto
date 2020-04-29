@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package examples;
+
+message Hello {
+	message World {
+		string hello_world = 1;
+	}
+	message Their {
+		string hello_their = 1;
+	}
+
+	World world = 1;
+	Their their = 2;
+}
+
+service HelloService {
+	rpc World(Hello) returns (Hello.World);
+	rpc Their(Hello) returns (Hello.Their);
+}
