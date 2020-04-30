@@ -1,0 +1,18 @@
+{{#*inline "table"}}
+CREATE TABLE {{snake package}}_{{snake message}} {
+	{{> @partial-block}}
+};
+{{/inline}}
+
+{{#*inline "column"}}
+CREATE COLUMN {{snake getName}} {{> @partial-block}};
+{{/inline}}
+
+{{#*inline "message"}}
+	{{#message}}
+		{{> @partial-block}}
+	{{/message}}
+{{/inline}}
+
+		{{#message}}
+		{{/message}}
