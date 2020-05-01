@@ -1,19 +1,20 @@
 {{#*inline "table"}}
-CREATE TABLE {{snake package}}_{{snake message}} {
+CREATE TABLE {{snake @package.name}}_{{snake @message.name}} {
 	{{> @partial-block}}
+	{{@message.recursive}}
 };
 {{/inline}}
 
 {{#*inline "column"}}
-CREATE COLUMN {{snake type}} {{> @partial-block}};
+CREATE COLUMN {{snake @field.name}} {{> @partial-block}};
 {{/inline}}
 
 {{#package}}
 	{{#file}}
 		{{#message}}
-			{{#> table package=@pb_package message=@name}}
-				{{#field}}
-					{{#> column type=@name}}
+			{{#> table}}
+				{{#field label="repeated"}}
+					{{#> column}}
 					{{/column}}
 				{{/field}}
 			{{/table}}

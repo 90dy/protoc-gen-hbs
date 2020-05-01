@@ -23,7 +23,7 @@ message Hello {
 	}
 
 	World world = 1;
-	There there = 2;
+	repeated There there = 2;
 }
 
 service HelloService {

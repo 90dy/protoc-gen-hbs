@@ -7,6 +7,7 @@ const dree = require('dree')
 const fs = require('fs')
 const pbHelpers = require('./protobuf')
 const caseHelpers = require('./case')
+const path = require('path')
 
 const handlebarsOptions = {
 	// data: false,
@@ -16,7 +17,7 @@ const handlebarsOptions = {
 	noEscape: true,
 	// strict: false,
 	// assumeObjects: true,
-	preventIndent: true,
+	// preventIndent: true,
 	// ignoreStandalone: true,
 	// explicitPartialContext: true,
 }
@@ -44,41 +45,49 @@ try {
 	const templateMap = {}
 
 	dree.scan(request.getParameter() || process.cwd(), { extensions: ['hbs'] }, template => {
+		templateMap[template.path] = {}
 		Object.values(fileDescriptorMap).forEach((fileDescriptor) => {
 			let output = ''
 			let mustaches = (decodeURIComponent(template.name).match(/{{.*}}/) || [''])[0]
 			if (mustaches) {
-					output = handlebars.compile(mustaches, handlebarsOptions)(fileDescriptor, templateOptions)
+					output = handlebars.compile(mustaches, handlebarsOptions)(request, templateOptions)
 			} else {
 				filename = template.name
 			}
 			output.split(',').forEach(_ => {
+				const fileDescPath = path.dirname(fileDescriptor.getName())
 				let fileName = template.name
 				fileName = fileName.split(mustaches)
 				fileName.splice(1, 0, _)
 				fileName = fileName.join('')
 				fileName = fileName.replace(/\.hbs$/, '')
-				if (!templateMap[fileName]) {
-					templateMap[fileName] = {
-						path: template.path,
-						request: (() => {
+				fileName = fileName.replace(fileDescPath, '')
+				fileName = path.join(fileDescPath, fileName)
+
+				if (!templateMap[template.path][fileName]) {
+					templateMap[template.path][fileName] = (() => {
 							const templateRequest = request.clone()
-							templateRequest.setFileToGenerateList([])
+							templateRequest.setFileToGenerateList([
+								fileDescriptor.getName()
+							])
 							return templateRequest
-						})(),
-					}
+						})()
+				} else {
+					templateMap[template.path][fileName]
+						.addFileToGenerate(fileDescriptor.getName())
 				}
-				templateMap[fileName].request.addFileToGenerate(fileDescriptor.getName())
 			})
 		})
 	})
 
-	Object.entries(templateMap).forEach(([name, { path, request }]) => {
-		const file = new CodeGeneratorResponse.File()
-		file.setName(name)
-		file.setContent(handlebars.compile(fs.readFileSync(path, 'utf8'), handlebarsOptions)(request, templateOptions))
-		response.addFile(file)
-	})
+	Object.entries(templateMap).forEach(([path, fileNameMap]) =>
+		Object.entries(fileNameMap).forEach(([name, request]) => {
+			const file = new CodeGeneratorResponse.File()
+			file.setName(name)
+			file.setContent(handlebars.compile(fs.readFileSync(path, 'utf8'), handlebarsOptions)(request, templateOptions))
+			response.addFile(file)
+		})
+	)
 
 	process.stdout.write(Buffer.from(response.serializeBinary()))
 } catch (err) {
