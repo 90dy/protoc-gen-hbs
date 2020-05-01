@@ -39,10 +39,12 @@ const mapPackage = (context, options, callback) => {
 	return mapFile(context, options, fileDesc => {
 		if (!packageList[fileDesc.package]) {
 			packageList[fileDesc.package] = options.data.root.clone()
+			packageList[fileDesc.package].setProtoFileList([fileDesc])
 			packageList[fileDesc.package].setFileToGenerateList([fileDesc.getName()])
 			return packageList[fileDesc.package]
 		}
 		packageList[fileDesc.package].addFileToGenerate(fileDesc.getName())
+		packageList[fileDesc.package].addProtoFile(fileDesc)
 	}).map(callback)
 }
 module.exports.mapPackage = mapPackage
@@ -55,7 +57,7 @@ const mapMessage = (context, options, callback) => {
 			return context.getMessageTypeList().map(callback)
 		default:
 			return mapFile(context, options, fileDesc => {
-				return mapMessage(fileDesc, options, applyAsParentContext(fileDesc, options, callback))
+				return mapMessage(fileDesc, options, applyAsParentContext(context, fileDesc, options, callback))
 			}).flat(Infinity)
 	}
 }
@@ -69,7 +71,7 @@ const mapEnum = (context, options, callback) => {
 			return context.getEnumTypeList().map(callback)
 		default:
 			return mapFile(context, options, fileDesc => {
-				return mapEnum(fileDesc, options, applyAsParentContext(fileDesc, options, callback))
+				return mapEnum(fileDesc, options, applyAsParentContext(context, fileDesc, options, callback))
 			}).flat(Infinity)
 	}
 }
@@ -81,7 +83,7 @@ const mapService = (context, options, callback) => {
 			return context.getServiceList().map(callback)
 		default:
 			return mapFile(context, options, fileDesc => {
-				return mapService(fileDesc, options, applyAsParentContext(fileDesc, options, callback))
+				return mapService(fileDesc, options, applyAsParentContext(context,  fileDesc, options, callback))
 			}).flat(Infinity)
 	}
 }
@@ -98,7 +100,7 @@ const mapOption = (context, options, callback) => {
 			)
 		default:
 			return mapFile(context, options, fileDesc => {
-				return mapOption(fileDesc, options, applyAsParentContext(fileDesc, options, callback))
+				return mapOption(fileDesc, options, applyAsParentContext(context, fileDesc, options, callback))
 			})
 	}
 }
@@ -110,11 +112,11 @@ const mapField = (context, options, callback) => {
 			return context.getFieldList().map(callback)
 		case FileDescriptorProto:
 			return context.getMessageTypeList().map(message => {
-				return mapField(message, options, applyAsParentContext(message, options, callback))
+				return mapField(message, options, applyAsParentContext(message, context, options, callback))
 			})
 		default:
 			return mapFile(context, options, fileDesc => {
-				return mapField(fileDesc, options, applyAsParentContext(fileDesc, options, callback))
+				return mapField(fileDesc, options, applyAsParentContext(context, fileDesc, options, callback))
 			})
 	}
 }
@@ -139,7 +141,7 @@ const mapRPC = (context, options, callback) => {
 			return context.getMethodList().map(callback)
 		case FileDescriptorProto:
 			return context.getServiceList().map(service => {
-				return mapRPC(service, options, applyAsParentContext(service, options, callback))
+				return mapRPC(service, options, applyAsParentContext(service, context, options, callback))
 			}).flat(Infinity)
 		default:
 			return mapFile(context, options, fileDesc => {
@@ -149,21 +151,34 @@ const mapRPC = (context, options, callback) => {
 }
 module.exports.mapRPC = mapRPC
 
-const applyAsParentContext = (context, options, callback) => (object, index, array, key) => {
+const applyAsParentContext = (context, fileDesc, options, callback) => (object, index, array, key) => {
 	switch (Object.getPrototypeOf(context).constructor) {
-		case CodeGeneratorRequest.name:
+		case CodeGeneratorRequest:
 			if (context !== options.data.root) {
+				// context === package
 				return callback(object, index, array, key)
+			} else {
+				// context === root
+				return applyAsParentContext(
+					fileDesc,
+					fileDesc,
+					options,
+					callback
+				)(object, index, array, key)
 			}
 		default:
 			const clone = object.clone()
-			clone.setName((context.getPackage || context.getName)() + '.' + object.getName())
-			return clone
+			const prefix = context.getPackage
+				? context.getPackage()
+				: context.getName()
+			clone.setName(prefix + '.' + object.getName())
+			return callback(clone, index, array, key)
 	}
 }
 module.exports.applyAsParentContext = applyAsParentContext
 
 const applyDataVariables = options => (value, index, array, key) => {
+
 	if (options.fn) {
 		return options.fn(value, {
 			data: {
@@ -172,6 +187,7 @@ const applyDataVariables = options => (value, index, array, key) => {
 				index,
 				first: index === 0,
 				last: index === array.length - 1,
+				...value.toObject(),
 			}
 		})
 	}
@@ -181,87 +197,93 @@ module.exports.applyDataVariables = applyDataVariables
 
 module.exports.register = handlebars => {
 	handlebars.registerHelper('import', function (options) {
-		const list = mapDependency(this, options, applyDataVariables(options))
+		const list = mapDependency(this, options, _ => _)
 		if (!options.fn) {
 			return list
 		}
-		return list
+		return list.map(applyDataVariables(options))
 	})
 	handlebars.registerHelper('file', function (options) {
-		const list = mapFile(this, options, applyDataVariables(options))
+		const list = mapFile(this, options, _ => _)
 		if (!options.fn) {
 			return list.map(_ => _.getName())
 		}
-		return list
+		return list.map(applyDataVariables(options))
 	})
 	handlebars.registerHelper('package', function (options) {
-		const list = mapPackage(this, options, applyDataVariables(options))
+		const list = mapPackage(this, options, _ => _)
 		if (!options.fn) {
-			return list.map(_ => mapFile(_, options, _ => _.getPackage())).flat(Infinity)
+			return list.map(_ => {
+				const file = _.getProtoFileList()[0]
+				return file
+				  ? file.getName()
+					: ''
+			}).flat(Infinity)
 		}
-		return list
+		return list.map(applyDataVariables(options))
 	})
 	handlebars.registerHelper('enum', function (options) {
-		const list = mapEnum(this, options, applyDataVariables(options))
+		const list = mapEnum(this, options, _ => _)
 		if (!options.fn) {
 			return list.map(_ => _.getName())
 		}
-		return list
+		return list.map(applyDataVariables(options))
 	})
 	handlebars.registerHelper('message', function (options) {
-		const list = mapMessage(this, options, applyDataVariables(options))
+		const list = mapMessage(this, options, _ => _)
+		console.error(list.map(_ => _)[0])
 		if (!options.fn) {
 			return list.map(_ => _.getName())
 		}
-		return list
+		return list.map(applyDataVariables(options))
 	})
 	handlebars.registerHelper('field', function (options) {
-		const list = mapField(this, options, applyDataVariables(options))
+		const list = mapField(this, options, _ => _)
 		if (!options.fn) {
 			return list.map(_ => _.getName())
 		}
-		return list
+		return list.map(applyDataVariables(options))
 	})
 	handlebars.registerHelper('type', function (options) {
-		// const list = mapType(this. options, applyDataVariables(options))
+		// const list = mapType(this. options, _ => _)
 		// if (!options.fn) {
 		// return list.map(_ => _.getName())
 		// }
 		// return list
 	})
 	handlebars.registerHelper('option', function (options) {
-		const list = mapOption(this, options, applyDataVariables(options))
+		const list = mapOption(this, options, _ => _)
 		if (!options.fn) {
 			return list.map(_ => _.getName())
 		}
-		return list
+		return list.map(applyDataVariables(options))
 	})
 	handlebars.registerHelper('service', function (options) {
-		const list = mapService(this, options, applyDataVariables(options))
+		const list = mapService(this, options, _ => _)
 		if (!options.fn) {
 			return list.map(_ => _.getName())
 		}
-		return list
+		return list.map(applyDataVariables(options))
 	})
 	handlebars.registerHelper('rpc', function (options) {
-		const list = mapRPC(this, options, applyDataVariables(options))
+		const list = mapRPC(this, options, _ => _)
 		if (!options.fn) {
 			return list.map(_ => _.getName())
 		}
-		return list
+		return list.map(applyDataVariables(options))
 	})
 	handlebars.registerHelper('scalar', function (options) {
-		// const list = mapScalar(this, options, applyDataVariables(options))
+		// const list = mapScalar(this, options, _ => _)
 		// if (!options.fn) {
 		// return list.map(_ => _.getName())
 		// }
 		// return list
 	})
 	handlebars.registerHelper('extension', function (options) {
-		const list = mapExtension(this, options, applyDataVariables(options))
+		const list = mapExtension(this, options, _ => _)
 		if (!options.fn) {
 			return list.map(_ => _.getName())
 		}
-		return list
+		return list.map(applyDataVariables(options))
 	})
 }

@@ -5,14 +5,18 @@ CREATE TABLE {{snake package}}_{{snake message}} {
 {{/inline}}
 
 {{#*inline "column"}}
-CREATE COLUMN {{snake getName}} {{> @partial-block}};
+CREATE COLUMN {{snake type}} {{> @partial-block}};
 {{/inline}}
 
-{{#*inline "message"}}
-	{{#message}}
-		{{> @partial-block}}
-	{{/message}}
-{{/inline}}
-
+{{#package}}
+	{{#file}}
 		{{#message}}
+			{{#> table package=@pb_package message=@name}}
+				{{#field}}
+					{{#> column type=@name}}
+					{{/column}}
+				{{/field}}
+			{{/table}}
 		{{/message}}
+	{{/file}}
+{{/package}}

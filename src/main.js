@@ -16,6 +16,7 @@ const handlebarsOptions = {
 	noEscape: true,
 	// strict: false,
 	// assumeObjects: true,
+	preventIndent: true,
 	// ignoreStandalone: true,
 	// explicitPartialContext: true,
 }
