@@ -14,14 +14,14 @@ This is why this project exists.
 
 ## Philosophy
 
-* Simple and understable templates
+* Newbie-friendly
 * Less configs as possible
-* Knowing how protobuf descriptors are structured must be useless
-* Make protobuf developpers happy :smile:
+* Maintainable
+* Happy protobuf developpers :smile:
 
 ## Installation
 
-First, install protoc: http://google.github.io/proto-lens/installing-protoc.html
+First, install [protoc](http://google.github.io/proto-lens/installing-protoc.html) and [yarn](https://yarnpkg.com/en/docs/install) or [npm](https://www.npmjs.com/get-npm)
 
 Then type:
 
@@ -46,26 +46,29 @@ protoc --hbs_out="." [-I<proto_paths>...] <proto_files>...
 ### Template
 
 * Template file name can be of the form:
-	* `whatever.hbs` to aggregate every proto file
-	* `{{filename}}.ext.hbs` to generate one file by proto file
-	* `{{package}}.ext.hbs` to generate one file by package
-	* `{{#whatever}}{{/whatever}}.hbs` is not really recommended, but if needed, use encodeURI over it for your file system
+  * `whatever.hbs` to aggregate every proto file
+  * `{{file}}.ext.hbs` to generate one file by proto file
+  * `{{package}}.ext.hbs` to generate one file by package
+  * `{{service}}.ext.hbs` to generate one file by service
+  * `{{#whatever}}{{/whatever}}.hbs` is not really recommended, but if needed, use encodeURI over it for your file system
 * Each template get CodeGeneratorRequest as input with:
-	* all file descriptors from input and imported (as protoc does with plugins)
-	* list only the current proto file used for the template in `file_to_generate`
-	* For more information look at [CodeGeneratorRequest](https://github.com/protocolbuffers/protobuf/blob/4059c61f27eb1b06c4ee979546a238be792df0a4/src/google/protobuf/compiler/plugin.proto#L68) and [FileDescriptorProto]((https://github.com/protocolbuffers/protobuf/blob/4059c61f27eb1b06c4ee979546a238be792df0a4/src/google/protobuf/descriptor.proto#L62)
+  * all file descriptors from input and imported (as protoc does with plugins)
+  * list only the current proto file used for the template in `file_to_generate`
+  * For more information look at [CodeGeneratorRequest](https://github.com/protocolbuffers/protobuf/blob/4059c61f27eb1b06c4ee979546a238be792df0a4/src/google/protobuf/compiler/plugin.proto#L68) and [FileDescriptorProto]((https://github.com/protocolbuffers/protobuf/blob/4059c61f27eb1b06c4ee979546a238be792df0a4/src/google/protobuf/descriptor.proto#L62)
 
 ### Helpers
 
 * Helpers can take a string argument to filter the descriptors used
 * Nested helpers override others inside current scope
-* For helpers not related with protobuf, all [handlebars-helpers](helpers/handlebars-helpers), are included
+* For helpers not related with protobuf
+	* all [handlebars-helpers](helpers/handlebars-helpers) have been included
+	* better string case helpers have been added too (see [here](src/case.js))
 
 #### [{{import}}](src/import.js)
 
 ```handlebars
 {{#import}}
-include "{{name}}.pb.h"
+include "{{@name}}.pb.h"
 {{/import}}
 ```
 
@@ -73,34 +76,68 @@ include "{{name}}.pb.h"
 
 ```handlebars
 {{#package}}
-namespace {{name}} {
-	// will add nested message, enum and fields
-	{{> @partial-block}}
+namespace {{@name}} {
+  // will add nested message, enum and fields
 }
 {{/package}}
 
 {{#package "google.*"}}
-	// {{name}}
+  // {{@name}}
+{{else}}
+  // ...
 {{/package}}
 ```
 
 #### [{{message}}](src/message.js)
 
 ```handlebars
-{{#message}}
-class {{name}} {}
-{{/message}}
-
 {{#message "google.protobuf.Timestamp"}}
-class {{name}} extends DateTime {}
+class {{@name}} extends DateTime {}
+{{else}}
+class {{@name}} {}
 {{/message}}
 ```
+
+* By default children will get parents name as prefix:
+
+```handlebars
+{{#message}}
+  {{@name}}
+{{/message}}
+```
+
+equals
+
+```handlebars
+{{#service}}
+  {{#message}}
+  {{@service.name}}.{{@name}}
+  {{/message}}
+{{/service}}
+```
+
 
 #### [{{field}}](src/field.js)
 
 ```handlebars
 {{#field}}
-	{{name}}: {{> scalar}}
+const {{@name}}: {{@type}} = null
+{{/field}}
+```
+
+* You can filter fields by label or type
+
+```handlebars
+{{#field label="repeated"}}
+const {{@name}}: Array<{{@type}}> = []
+{{/field}}
+
+{{#field type="string"}}
+const {{@name}}: string = ''
+{{/field}}
+
+{{#field label="optional" type="number"}}
+const {{@name}}: number? = undefined
 {{/field}}
 ```
 
@@ -108,28 +145,20 @@ class {{name}} extends DateTime {}
 
 ```handlebars
 {{#enum}}
-enum {{name}} {
-	{{> field}}
+enum {{@name}} {
+  {{#value}}
+    {{@name}}: {{@number}}
+  {{/value}}
 }
 {{/enum}}
-```
-
-#### [{{scalar}}](src/scalar.js)
-
-```handlebars
-{{#scalar}}
-	{{#string}}string{{/string}}
-	{{#bool}}boolean{{/bool}}
-	...
-{{/scalar}}
 ```
 
 #### [{{service}}](src/service.js)
 
 ```handlebars
 {{#service}}
-interface {{name}} {
-	{{> rpc}}
+interface {{@name}} {
+  // do stuff
 }
 {{/service}}
 ```
@@ -138,9 +167,29 @@ interface {{name}} {
 
 ```handlebars
 {{#rpc}}
-{{name}}(request: {{request}}) -> {{response}}
+  const {{@name}} = (request: {{@request.type}}): Promise<{{@response.type}}> => {
+    // do stuff
+  }
+{{/rpc}}
+
+// filter by request/response type
+{{#rpc client="unary" server="stream"}}
+  const {{@name}} = (request: {{@request.type}}, (response: {{@response.type}}) => void): Promise<void>
 {{/rpc}}
 ```
+
+#### [{{option}}](src/option.js)
+
+```handlebars
+{{#message}}
+const {{@name}} = {
+  {{#field}}
+  {{@name}}: {{#option name="jsonType"}}{{@value}}{{/option}},
+  {{/field}}
+}
+{{/message}}
+```
+
 
 ## Contributing
 
@@ -149,3 +198,7 @@ Make PRs and have fun 👻
 ## Examples
 
 See examples directory [here](examples)
+
+## License
+
+This project is licensed under Apache 2.0 - see [LICENSE](LICENSE) file for details

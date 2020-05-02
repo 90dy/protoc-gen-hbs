@@ -302,8 +302,10 @@ const applyHandlebarsIterator = (options) => (context, index, array, key) => {
 			}
 		case FieldDescriptorProto:
 			data.name = context.getName()
+			data.number = context.getNumber()
 			data.field = {
-				name: data.name
+				name: data.name,
+				number: data.number,
 			}
 			break
 		case OneofDescriptorProto:
