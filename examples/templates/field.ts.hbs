@@ -1,0 +1,17 @@
+{{#field}}
+const {{@name}}: {{@type}} = null
+{{/field}}
+
+// You can filter fields by label or type
+
+{{#field label="repeated"}}
+const {{@name}}: Array<{{@type}}> = []
+{{/field}}
+
+{{#field type="string"}}
+const {{@name}}: string = ''
+{{/field}}
+
+{{#field label="optional" type="number"}}
+const {{@name}}: number? = undefined
+{{/field}}

@@ -1,8 +1,8 @@
 {{#*inline "table"}}
 CREATE TABLE {{snake @package.name}}_{{snake @message.name}} {
 	{{> @partial-block}}
-	{{@message.recursive}}
 };
+{{@message.recursive}}
 {{/inline}}
 
 {{#*inline "column"}}

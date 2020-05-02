@@ -51,10 +51,11 @@ try {
 			let mustaches = (decodeURIComponent(template.name).match(/{{.*}}/) || [''])[0]
 			if (mustaches) {
 					output = handlebars.compile(mustaches, handlebarsOptions)(request, templateOptions)
+				console.error(output)
 			} else {
 				filename = template.name
 			}
-			output.split(',').forEach(_ => {
+			output.split('\n').filter(_ => _).forEach(_ => {
 				const fileDescPath = path.dirname(fileDescriptor.getName())
 				let fileName = template.name
 				fileName = fileName.split(mustaches)
@@ -82,10 +83,15 @@ try {
 
 	Object.entries(templateMap).forEach(([path, fileNameMap]) =>
 		Object.entries(fileNameMap).forEach(([name, request]) => {
-			const file = new CodeGeneratorResponse.File()
-			file.setName(name)
-			file.setContent(handlebars.compile(fs.readFileSync(path, 'utf8'), handlebarsOptions)(request, templateOptions))
-			response.addFile(file)
+			try {
+				const file = new CodeGeneratorResponse.File()
+				file.setName(name)
+				file.setContent(handlebars.compile(fs.readFileSync(path, 'utf8'), handlebarsOptions)(request, templateOptions))
+				response.addFile(file)
+			} catch (error) {
+				error.message = 'Template ' + path + ': ' + error.message
+				throw error
+			}
 		})
 	)
 

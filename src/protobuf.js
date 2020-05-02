@@ -109,66 +109,117 @@ const mapOption = (context, options, callback) => {
 		case EnumValueDescriptorProto:
 		case EnumValueDescriptorProto:
 		case OneofDescriptorProto:
-		case ServiceDescriptorProto:
+			// case ServiceDescriptorProto:
 		case MethodDescriptorProto:
-			return Object.entries(context.getOptions().toObject())
-				.map(([name, value], index, array) => {
-					return (
-						!options.hash.name || options.hash.name === name
-					) && (
-						!options.hash.value || options.hash.value === value
-					)
-						? callback(value, index, array)
-						: undefined
-				})
+			return Object.entries(context.getOptions().toObject()).filter(([name, value]) => {
+				return (
+					!options.hash.name || options.hash.name === name
+				) && (
+					!options.hash.value || options.hash.value === value
+				)
+			}).map(callback)
 		default:
 			return mapFile(context, options, fileDesc => {
 				return mapOption(fileDesc, options, applyAsParentContext(context, fileDesc, options, callback))
-			})
+			}).flat(Infinity)
 	}
 }
 module.exports.mapOption = mapOption
 
-const mapFieldMatrix = {
-	label: {
-		[FieldDescriptorProto.Label.LABEL_OPTIONAL]: 'optional',
-		[FieldDescriptorProto.Label.LABEL_REQUIRED]: 'required',
-		[FieldDescriptorProto.Label.LABEL_REPEATED]: 'repeated',
-	},
-	type: {
-		[FieldDescriptorProto.Type.TYPE_DOUBLE]: 'double',
-		[FieldDescriptorProto.Type.TYPE_FLOAT]: 'float',
-		[FieldDescriptorProto.Type.TYPE_INT64]: 'int64',
-		[FieldDescriptorProto.Type.TYPE_UINT64]: 'uint64',
-		[FieldDescriptorProto.Type.TYPE_INT32]: 'int32',
-		[FieldDescriptorProto.Type.TYPE_FIXED64]: 'fixed64',
-		[FieldDescriptorProto.Type.TYPE_FIXED32]: 'fixed32',
-		[FieldDescriptorProto.Type.TYPE_BOOL]: 'bool',
-		[FieldDescriptorProto.Type.TYPE_STRING]: 'string',
-		[FieldDescriptorProto.Type.TYPE_GROUP]: 'group',
-		[FieldDescriptorProto.Type.TYPE_MESSAGE]: 'message',
-		[FieldDescriptorProto.Type.TYPE_BYTES]: 'bytes',
-		[FieldDescriptorProto.Type.TYPE_UINT32]: 'uint32',
-		[FieldDescriptorProto.Type.TYPE_ENUM]: 'enum',
-		[FieldDescriptorProto.Type.TYPE_SFIXED32]: 'sfixed32',
-		[FieldDescriptorProto.Type.TYPE_SFIXED64]: 'sfixed64',
-		[FieldDescriptorProto.Type.TYPE_SINT32]: 'sint32',
-		[FieldDescriptorProto.Type.TYPE_SINT64]: 'sint64',
-
+const mapLabel = (context, options, callback) => {
+	switch (Object.getPrototypeOf(context).constructor) {
+		case FieldDescriptorProto:
+			switch (context.getLabel()) {
+				case FieldDescriptorProto.Label.LABEL_OPTIONAL:
+					return 'optional'
+				case FieldDescriptorProto.Label.LABEL_REQUIRED:
+					return 'required'
+				case FieldDescriptorProto.Label.LABEL_REPEATED:
+					return 'repeated'
+				default:
+					return ''
+			}
+		case DescriptorProto:
+			return mapField(context, options, fieldDesc => {
+				return mapLabel(fieldDesc, options, applyAsParentContext(context, null, options, callback))
+			}).flat(Infinity)
+		default:
+			return mapFile(context, options, fileDesc => {
+				return mapMessage(context, options, messageDesc => {
+					return mapLabel(messageDesc, options, applyAsParentContext(context, fileDesc, options, callback))
+				}).flat(Infinity)
+			}).flat(Infinity)
 	}
 }
+module.exports.mapLabel = mapLabel
+
+const mapType = (context, options, callback) => {
+	switch (Object.getPrototypeOf(context).constructor) {
+		case FieldDescriptorProto:
+			switch (context.getType()) {
+				case FieldDescriptorProto.Type.TYPE_DOUBLE:
+					return 'double'
+				case FieldDescriptorProto.Type.TYPE_FLOAT:
+					return 'float'
+				case FieldDescriptorProto.Type.TYPE_INT64:
+					return 'int64'
+				case FieldDescriptorProto.Type.TYPE_UINT64:
+					return 'uint64'
+				case FieldDescriptorProto.Type.TYPE_INT32:
+					return 'int32'
+				case FieldDescriptorProto.Type.TYPE_FIXED64:
+					return 'fixed64'
+				case FieldDescriptorProto.Type.TYPE_FIXED32:
+					return 'fixed32'
+				case FieldDescriptorProto.Type.TYPE_BOOL:
+					return 'bool'
+				case FieldDescriptorProto.Type.TYPE_STRING:
+					return 'string'
+				case FieldDescriptorProto.Type.TYPE_GROUP:
+					return 'group'
+				case FieldDescriptorProto.Type.TYPE_MESSAGE:
+					return 'message'
+				case FieldDescriptorProto.Type.TYPE_BYTES:
+					return 'bytes'
+				case FieldDescriptorProto.Type.TYPE_UINT32:
+					return 'uint32'
+				case FieldDescriptorProto.Type.TYPE_ENUM:
+					return 'enum'
+				case FieldDescriptorProto.Type.TYPE_SFIXED32:
+					return 'sfixed32'
+				case FieldDescriptorProto.Type.TYPE_SFIXED64:
+					return 'sfixed64'
+				case FieldDescriptorProto.Type.TYPE_SINT32:
+					return 'sint32'
+				case FieldDescriptorProto.Type.TYPE_SINT64:
+					return 'sint64'
+				default:
+					return ''
+			}
+		case DescriptorProto:
+			return mapField(context, options, fieldDesc => {
+				return mapType(fieldDesc, options, applyAsParentContext(context, null, options, callback))
+			}).flatten(Infinity)
+		default:
+			return mapFile(context, options, fileDesc => {
+				return mapMessage(context, options, messageDesc => {
+					return mapType(messageDesc, options, applyAsParentContext(context, fileDesc, options, callback))
+				}).flatten(Infinity)
+			}).flatten(Infinity)
+	}
+}
+module.exports.mapType = mapType
+
 const mapField = (context, options, callback) => {
 	switch (Object.getPrototypeOf(context).constructor) {
 		case DescriptorProto:
-			return context.getFieldList().map((fieldDesc, index, array) => {
+			return context.getFieldList().filter(fieldDesc => {
 				return (
-					!options.hash.label || options.hash.label === mapFieldMatrix.label[fieldDesc.getLabel()]
+					mapLabel(fieldDesc, label => !options.hash.label || options.hash.label === label)
 				) && (
-					!options.hash.type || options.hash.type === mapFieldMatric.type[fieldDesc.getType()]
+					mapType(fieldDesc, type => !options.hash.type || options.hash.type === type)
 				)
-					? callback(fieldDesc, index, array)
-					: undefined
-			})
+			}).map(callback)
 		case FileDescriptorProto:
 			return context.getMessageTypeList().map(message => {
 				return mapField(message, options, applyAsParentContext(message, context, options, callback))
@@ -222,12 +273,12 @@ const mapRPC = (context, options, callback) => {
 }
 module.exports.mapRPC = mapRPC
 
-const applyAsParentContext = (context, fileDesc, options, callback) => (object, index, array, key) => {
+const applyAsParentContext = (context, fileDesc, options, callback) => (value, index, array, key) => {
 	switch (Object.getPrototypeOf(context).constructor) {
 		case CodeGeneratorRequest:
 			if (context !== options.data.root) {
 				// context === package
-				return callback(object, index, array, key)
+				return callback(value, index, array, key)
 			} else {
 				// context === root
 				return applyAsParentContext(
@@ -235,20 +286,26 @@ const applyAsParentContext = (context, fileDesc, options, callback) => (object, 
 					fileDesc,
 					options,
 					callback
-				)(object, index, array, key)
+				)(value, index, array, key)
 			}
 		default:
-			const clone = object.clone()
 			const prefix = context.getPackage
 				? context.getPackage()
 				: context.getName()
-			clone.setName(prefix + '.' + object.getName())
-			return callback(clone, index, array, key)
+			if (typeof value === 'object') {
+				const clone = value.clone()
+				clone.setName(prefix + '.' + value.getName())
+				return callback(clone, index, array, key)
+			}
+			if (typeof value === 'string') {
+				return prefix + '.' + value
+			}
+			return value
 	}
 }
 module.exports.applyAsParentContext = applyAsParentContext
 
-const applyHandlebarsIterator = (options) => (context, index, array, key) => {
+const applyOptionsIterator = (options) => (context, index, array, key) => {
 	let data = {
 		...options.data,
 		key,
@@ -279,8 +336,8 @@ const applyHandlebarsIterator = (options) => (context, index, array, key) => {
 				return mapMessage(
 					context,
 					recursiveOptions,
-					applyHandlebarsIterator(options)
-				).join('')
+					applyOptionsIterator(options)
+				).join('\n')
 			}
 			data.message = {
 				name: data.name,
@@ -302,10 +359,10 @@ const applyHandlebarsIterator = (options) => (context, index, array, key) => {
 			}
 		case FieldDescriptorProto:
 			data.name = context.getName()
-			data.number = context.getNumber()
+			data.type = mapType(context, _ => _)
 			data.field = {
 				name: data.name,
-				number: data.number,
+				type: data.type,
 			}
 			break
 		case OneofDescriptorProto:
@@ -331,96 +388,69 @@ const applyHandlebarsIterator = (options) => (context, index, array, key) => {
 	}
 	return options.fn(context, { data })
 }
-module.exports.applyHandlebarsIterator = applyHandlebarsIterator
+module.exports.applyOptionsIterator = applyOptionsIterator
+
+const applyOptions = (context, options) => {
+	if (typeof context !== 'object') {
+		return !options.fn
+			? _ => _
+			: applyOptionsIterator(options)
+	}
+	switch (Object.getPrototypeOf(context).constructor) {
+		case CodeGeneratorRequest:
+			if (context !== options.data.root) {
+				// context === package
+				return !options.fn
+					? _ => {
+						const file = _.getProtoFileList()[0]
+						return file
+							? file.getPackage()
+							: ''
+					} : applyOptionsIterator(options)
+			}
+		default:
+			return !options.fn
+				? _ => _.getName()
+				: applyOptionsIterator(options)
+	}
+}
 
 module.exports.register = handlebars => {
 	handlebars.registerHelper('import', function (options) {
-		const list = mapDependency(this, options, _ => _)
-		if (!options.fn) {
-			return list
-		}
-		return list.map(applyHandlebarsIterator(options)).join('')
+		return mapDependency(this, options, applyOptions(this, options)).join('\n')
 	})
 	handlebars.registerHelper('file', function (options) {
-		const list = mapFile(this, options, _ => _)
-		if (!options.fn) {
-			return list.map(_ => _.getName())
-		}
-		return list.map(applyHandlebarsIterator(options)).join('')
+		return mapFile(this, options, applyOptions(this, options)).join('\n')
 	})
 	handlebars.registerHelper('package', function (options) {
-		const list = mapPackage(this, options, _ => _)
-		if (!options.fn) {
-			return list.map(_ => {
-				const file = _.getProtoFileList()[0]
-				return file
-					? file.getName()
-					: ''
-			}).flat(Infinity)
-		}
-		return list.map(applyHandlebarsIterator(options)).join('')
+		return mapPackage(this, options, applyOptions(this, options)).join('\n')
 	})
 	handlebars.registerHelper('enum', function (options) {
-		const list = mapEnum(this, options, _ => _)
-		if (!options.fn) {
-			return list.map(_ => _.getName())
-		}
-		return list.map(applyHandlebarsIterator(options)).join('')
+		return mapEnum(this, options, applyOptions(this, options)).join('\n')
 	})
 	handlebars.registerHelper('value', function (options) {
-		const list = mapValue(this, options, _ => _)
-		if (!options.fn) {
-			return list.map(_ => _.getName())
-		}
-		return list.map(applyHandlebarsIterator(options)).join('')
+		return mapValue(this, options, applyOptions(this, options)).join('\n')
 	})
 	handlebars.registerHelper('message', function (options) {
-		const list = mapMessage(this, options, _ => _)
-		if (!options.fn) {
-			return list.map(_ => _.getName())
-		}
-		return list.map(applyHandlebarsIterator(options)).join('')
+		return mapMessage(this, options, applyOptions(this, options)).join('\n')
 	})
 	handlebars.registerHelper('field', function (options) {
-		const list = mapField(this, options, _ => _)
-		if (!options.fn) {
-			return list.map(_ => _.getName())
-		}
-		return list.map(applyHandlebarsIterator(options)).join('')
+		return mapField(this, options, applyOptions(this, options)).join('\n')
 	})
 	handlebars.registerHelper('oneof', function (options) {
-		const list = mapOneOf(this, options, _ => _)
-		if (!options.fn) {
-			return list.map(_ => _.getName())
-		}
-		return list
+		return mapOneOf(this, options, applyOptions(this, options)).join('\n')
 	})
 	handlebars.registerHelper('option', function (options) {
-		const list = mapOption(this, options, _ => _)
-		if (!options.fn) {
-			return list.map(_ => _.getName())
-		}
-		return list.map(applyHandlebarsIterator(options)).join('')
+		return mapOption(this, options, applyOptions(this, options)).join('\n')
 	})
 	handlebars.registerHelper('service', function (options) {
-		const list = mapService(this, options, _ => _)
-		if (!options.fn) {
-			return list.map(_ => _.getName())
-		}
-		return list.map(applyHandlebarsIterator(options)).join('')
+		return mapService(this, options, applyOptions(this, options)).join('\n')
 	})
 	handlebars.registerHelper('rpc', function (options) {
-		const list = mapRPC(this, options, _ => _)
-		if (!options.fn) {
-			return list.map(_ => _.getName())
-		}
-		return list.map(applyHandlebarsIterator(options)).join('')
+		return mapRPC(this, options, applyOptions(this, options)).join('\n')
 	})
 	handlebars.registerHelper('extension', function (options) {
-		const list = mapExtension(this, options, _ => _)
-		if (!options.fn) {
-			return list.map(_ => _.getName())
-		}
-		return list.map(applyHandlebarsIterator(options)).join('')
+		return mapExtension(this, options, applyOptions(this, options)).join('\n')
 	})
 }
+
