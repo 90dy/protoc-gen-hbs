@@ -1,4 +1,4 @@
-const glob = require('glob')
+const minimatch = require('minimatch')
 const {CodeGeneratorRequest} = require('google-protobuf/google/protobuf/compiler/plugin_pb')
 const {
 	FileDescriptorProto,
@@ -52,6 +52,13 @@ module.exports.mapPackage = mapPackage
 
 const mapMessage = (context, options, callback) => {
 	switch (Object.getPrototypeOf(context).constructor) {
+		case FieldDescriptorProto:
+			return mapType(context, options, type => {
+				if (type === 'message') {
+					// TODO: find message from root
+					// return callback(messageFindFromRoot)
+				}
+			})
 		case DescriptorProto:
 			return context.getNestedTypeList().map(callback)
 		case FileDescriptorProto:
@@ -99,7 +106,7 @@ const mapOneOf = (context, options, callback) => {
 			})
 	}
 }
-module.exports.mapOption = mapOneOf
+module.exports.mapOneOf = mapOneOf
 
 const mapOption = (context, options, callback) => {
 	switch (Object.getPrototypeOf(context).constructor) {
@@ -109,15 +116,13 @@ const mapOption = (context, options, callback) => {
 		case EnumValueDescriptorProto:
 		case EnumValueDescriptorProto:
 		case OneofDescriptorProto:
-			// case ServiceDescriptorProto:
+		case ServiceDescriptorProto:
 		case MethodDescriptorProto:
-			return Object.entries(context.getOptions().toObject()).filter(([name, value]) => {
-				return (
-					!options.hash.name || options.hash.name === name
-				) && (
-					!options.hash.value || options.hash.value === value
-				)
-			}).map(callback)
+			const optionsDesc = context.getOptions()
+			if (optionsDesc) {
+				return Object.entries(optionsDesc.toObject()).map(callback)
+			}
+			return []
 		default:
 			return mapFile(context, options, fileDesc => {
 				return mapOption(fileDesc, options, applyAsParentContext(context, fileDesc, options, callback))
@@ -199,13 +204,13 @@ const mapType = (context, options, callback) => {
 		case DescriptorProto:
 			return mapField(context, options, fieldDesc => {
 				return mapType(fieldDesc, options, applyAsParentContext(context, null, options, callback))
-			}).flatten(Infinity)
+			}).flat(Infinity)
 		default:
 			return mapFile(context, options, fileDesc => {
 				return mapMessage(context, options, messageDesc => {
 					return mapType(messageDesc, options, applyAsParentContext(context, fileDesc, options, callback))
-				}).flatten(Infinity)
-			}).flatten(Infinity)
+				})
+			}).flat(Infinity)
 	}
 }
 module.exports.mapType = mapType
@@ -213,13 +218,7 @@ module.exports.mapType = mapType
 const mapField = (context, options, callback) => {
 	switch (Object.getPrototypeOf(context).constructor) {
 		case DescriptorProto:
-			return context.getFieldList().filter(fieldDesc => {
-				return (
-					mapLabel(fieldDesc, label => !options.hash.label || options.hash.label === label)
-				) && (
-					mapType(fieldDesc, type => !options.hash.type || options.hash.type === type)
-				)
-			}).map(callback)
+			return context.getFieldList().map(callback)
 		case FileDescriptorProto:
 			return context.getMessageTypeList().map(message => {
 				return mapField(message, options, applyAsParentContext(message, context, options, callback))
@@ -251,7 +250,7 @@ const mapService = (context, options, callback) => {
 			return context.getServiceList().map(callback)
 		default:
 			return mapFile(context, options, fileDesc => {
-				return mapService(fileDesc, options, applyAsParentContext(context,  fileDesc, options, callback))
+				return mapService(fileDesc, options, applyAsParentContext(context, fileDesc, options, callback))
 			}).flat(Infinity)
 	}
 }
@@ -298,14 +297,14 @@ const applyAsParentContext = (context, fileDesc, options, callback) => (value, i
 				return callback(clone, index, array, key)
 			}
 			if (typeof value === 'string') {
-				return prefix + '.' + value
+				return callback(prefix + '.' + value, index, array, key)
 			}
-			return value
+			return callback(value, index, array, key)
 	}
 }
 module.exports.applyAsParentContext = applyAsParentContext
 
-const applyOptionsIterator = (options) => (context, index, array, key) => {
+const applyOptionsIteratorData = (options) => (value, index, array, key) => {
 	let data = {
 		...options.data,
 		key,
@@ -313,88 +312,104 @@ const applyOptionsIterator = (options) => (context, index, array, key) => {
 		first: index === 0,
 		last: index === array.length - 1
 	}
-	switch (Object.getPrototypeOf(context).constructor) {
+	switch (Object.getPrototypeOf(value).constructor) {
 		case CodeGeneratorRequest:
-			if (context !== options.data.root) {
+			if (value !== options.data.root) {
 				// package
-				data.name = context.getProtoFileList()[0].getPackage()
 				data.package = {
-					name: data.name
+					name: value.getProtoFileList()[0].getPackage()
 				}
+				data = { ...data, ...data.package }
 			}
 			break
 		case FileDescriptorProto:
-			data.name = context.getName()
 			data.file = {
-				name: data.name
+				name: value.getName()
 			}
+			data = { ...data, ...data.file }
 			break
 		case DescriptorProto:
-			data.name = context.getName()
-			data.recursive = () => {
-				const recursiveOptions = { ...options, _parent: data, data: {} }
-				return mapMessage(
-					context,
-					recursiveOptions,
-					applyOptionsIterator(options)
-				).join('\n')
-			}
 			data.message = {
-				name: data.name,
-				recursive: data.recursive,
+				name: value.getName(),
+				recursive: () => {
+					const recursiveOptions = { ...options, _parent: data, data: {} }
+					return mapMessage(
+						value,
+						recursiveOptions,
+						applyOptionsIteratorData(options)
+					).join('\n')
+				},
 			}
+			data = { ...data, ...data.message }
 			break
 		case EnumDescriptorProto:
-			data.name = context.getName()
 			data.enum = {
-				name: data.name
+				name: value.getName()
 			}
+			data = { ...data, ...data.enum }
 			break
 		case EnumValueDescriptorProto:
-			data.name = context.getName()
-			data.number = context.getNumber()
 			data.value = {
-				name: data.name,
-				number: data.number,
+				name: value.getName(),
+				number: value.getNumber(),
 			}
+			data = { ...data, ...data.value }
+			break
 		case FieldDescriptorProto:
-			data.name = context.getName()
-			data.type = mapType(context, _ => _)
 			data.field = {
-				name: data.name,
-				type: data.type,
+				name: value.getName(),
+				type: mapType(value, _ => _),
+				label: mapLabel(value, _ => _),
 			}
+			data = { ...data, ...data.field }
 			break
 		case OneofDescriptorProto:
-			data.name = context.getName()
 			data.oneof = {
-				name: data.name
+				name: value.getName(),
 			}
+			data = { ...data, ...data.oneof }
 			break
 		case ServiceDescriptorProto:
-			data.name = context.getName()
 			data.service = {
-				name: data.name
+				name: value.getName(),
 			}
+			data = { ...data, ...data.service }
 			break
 		case MethodDescriptorProto:
-			data.name = context.getName()
-			data.method = {
-				name: data.name
+			data.rpc = {
+				name: value.getName(),
+				input: value.getInputType().replace(/^\./, ''),
+				output: value.getOutputType().replace(/^\./, ''),
+				client: value.getClientStreaming() ? 'stream' : 'unary',
+				server: value.getServerStreaming() ? 'stream' : 'unary',
 			}
+			data = { ...data, ...data.rpc }
 			break
 		default:
 			break
 	}
-	return options.fn(context, { data })
+	if (Object.entries(options.hash).every(([key, value]) => {
+		switch (typeof value) {
+			case 'string':
+				return minimatch(data[key], value)
+			default:
+				return data[key] === value
+		}
+	})) {
+		return options.fn(value, { data })
+	} else if (options.inverse) {
+		return options.inverse(value, { data })
+	} else {
+		return ''
+	}
 }
-module.exports.applyOptionsIterator = applyOptionsIterator
+module.exports.applyOptionsIteratorData = applyOptionsIteratorData
 
 const applyOptions = (context, options) => {
 	if (typeof context !== 'object') {
 		return !options.fn
 			? _ => _
-			: applyOptionsIterator(options)
+			: applyOptionsIteratorData(options)
 	}
 	switch (Object.getPrototypeOf(context).constructor) {
 		case CodeGeneratorRequest:
@@ -406,12 +421,12 @@ const applyOptions = (context, options) => {
 						return file
 							? file.getPackage()
 							: ''
-					} : applyOptionsIterator(options)
+					} : applyOptionsIteratorData(options)
 			}
 		default:
 			return !options.fn
 				? _ => _.getName()
-				: applyOptionsIterator(options)
+				: applyOptionsIteratorData(options)
 	}
 }
 

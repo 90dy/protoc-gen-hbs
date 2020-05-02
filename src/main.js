@@ -51,16 +51,17 @@ try {
 			let mustaches = (decodeURIComponent(template.name).match(/{{.*}}/) || [''])[0]
 			if (mustaches) {
 					output = handlebars.compile(mustaches, handlebarsOptions)(request, templateOptions)
-				console.error(output)
 			} else {
-				filename = template.name
+				output = template.name + '\n'
 			}
 			output.split('\n').filter(_ => _).forEach(_ => {
 				const fileDescPath = path.dirname(fileDescriptor.getName())
 				let fileName = template.name
-				fileName = fileName.split(mustaches)
-				fileName.splice(1, 0, _)
-				fileName = fileName.join('')
+				if (mustaches) {
+					fileName = fileName.split(mustaches)
+					fileName.splice(1, 0, _)
+					fileName = fileName.join('')
+				}
 				fileName = fileName.replace(/\.hbs$/, '')
 				fileName = fileName.replace(fileDescPath, '')
 				fileName = path.join(fileDescPath, fileName)
