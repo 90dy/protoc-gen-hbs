@@ -71,8 +71,6 @@ try {
 				fileName = fileName.replace(fileDescPath + '/', '')
 				fileName = path.join(fileDescPath, templateSubPath, fileName)
 
-				console.error(fileName)
-
 				if (!templateMap[template.path][fileName]) {
 					templateMap[template.path][fileName] = (() => {
 							const templateRequest = {
