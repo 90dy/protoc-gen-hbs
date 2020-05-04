@@ -43,19 +43,21 @@ try {
 	}, {})
 
 	const templateMap = {}
+	const templateDir = path.resolve(request.getParameter() || process.cwd() + '/templates')
 
-	dree.scan(request.getParameter() || process.cwd(), { extensions: ['hbs'] }, template => {
+	dree.scan(request.getParameter() || process.cwd() + '/templates', { extensions: ['hbs'] }, template => {
 		templateMap[template.path] = {}
 		Object.values(fileDescriptorMap).forEach((fileDescriptor) => {
 			let output = ''
 			let mustaches = (decodeURIComponent(template.name).match(/{{.*}}/) || [''])[0]
 			if (mustaches) {
-					output = handlebars.compile(mustaches, handlebarsOptions)(request, templateOptions)
+				output = handlebars.compile(mustaches, handlebarsOptions)(request, templateOptions)
 			} else {
 				output = template.name + '\n'
 			}
 			output.split('\n').filter(_ => _).forEach(_ => {
 				const fileDescPath = path.dirname(fileDescriptor.getName())
+				const templateSubPath =  path.dirname(template.path).replace(templateDir, '')
 				let fileName = template.name
 				if (mustaches) {
 					fileName = fileName.split(mustaches)
@@ -64,7 +66,7 @@ try {
 				}
 				fileName = fileName.replace(/\.hbs$/, '')
 				fileName = fileName.replace(fileDescPath, '')
-				fileName = path.join(fileDescPath, fileName)
+				fileName = path.join(fileDescPath, templateSubPath, fileName)
 
 				if (!templateMap[template.path][fileName]) {
 					templateMap[template.path][fileName] = (() => {
@@ -85,6 +87,13 @@ try {
 	Object.entries(templateMap).forEach(([path, fileNameMap]) =>
 		Object.entries(fileNameMap).forEach(([name, request]) => {
 			try {
+				// let mustachesContent = (decodeURIComponent(path).match(
+				// 	/{{(import|file|package|enum|value|message|field|oneof|option|service|rpc|extension)}}/
+				// ) || [,''])[1]
+				// let templateContext =
+				// if (mustachesContent) {
+				// 	template
+				// }
 				const file = new CodeGeneratorResponse.File()
 				file.setName(name)
 				file.setContent(handlebars.compile(fs.readFileSync(path, 'utf8'), handlebarsOptions)(request, templateOptions))

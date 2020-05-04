@@ -4,7 +4,7 @@
 	"description": "protoc-gen-hbs",
 	"bin": "src/main.js",
 	"license": "Apache 2.0",
-	"script": {
+	"scripts": {
 		"gen:examples": "make gen.protoc.hbs"
 	},
 	"dependencies": {

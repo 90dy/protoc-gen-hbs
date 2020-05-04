@@ -55,10 +55,9 @@ const mapMessage = (context, options, callback) => {
 		case FieldDescriptorProto:
 			return mapType(context, options, type => {
 				if (type === 'message') {
-					// TODO: find message from root
-					// return callback(messageFindFromRoot)
+					return []
 				}
-			})
+			}).flat(Infinity).filter(_ => _)
 		case DescriptorProto:
 			return context.getNestedTypeList().map(callback)
 		case FileDescriptorProto:
