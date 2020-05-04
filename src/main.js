@@ -29,6 +29,9 @@ handlebarsHelpers({ handlebars })
 caseHelpers.register(handlebars)
 pbHelpers.register(handlebars)
 
+const compileMustaches = (request, mustaches, handlebarsOptions, templateOptions) =>
+	handlebars.compile(mustaches, handlebarsOptions)(request, templateOptions)
+
 try {
 	const requestBuffer = fs.readFileSync(0)
 	const requestUint8Array = new Uint8Array(requestBuffer.length)
@@ -51,7 +54,7 @@ try {
 			let output = ''
 			let mustaches = (decodeURIComponent(template.name).match(/{{.*}}/) || [''])[0]
 			if (mustaches) {
-				output = handlebars.compile(mustaches, handlebarsOptions)(request, templateOptions)
+				output = compileMustaches(request, mustaches, handlebarsOptions, templateOptions)
 			} else {
 				output = template.name + '\n'
 			}
@@ -72,14 +75,18 @@ try {
 
 				if (!templateMap[template.path][fileName]) {
 					templateMap[template.path][fileName] = (() => {
-							const templateRequest = request.clone()
-							templateRequest.setFileToGenerateList([
+							const templateRequest = {
+								codeGenReq: request.clone(),
+								contextName: _,
+							}
+							templateRequest.codeGenReq.setFileToGenerateList([
 								fileDescriptor.getName()
 							])
 							return templateRequest
 						})()
 				} else {
 					templateMap[template.path][fileName]
+						.codeGenReq
 						.addFileToGenerate(fileDescriptor.getName())
 				}
 			})
@@ -87,18 +94,21 @@ try {
 	})
 
 	Object.entries(templateMap).forEach(([path, fileNameMap]) =>
-		Object.entries(fileNameMap).forEach(([name, request]) => {
+		Object.entries(fileNameMap).forEach(([name, { contextName, codeGenReq }]) => {
 			try {
-				// let mustachesContent = (decodeURIComponent(path).match(
-				// 	/{{(import|file|package|enum|value|message|field|oneof|option|service|rpc|extension)}}/
-				// ) || [,''])[1]
-				// let templateContext =
-				// if (mustachesContent) {
-				// 	template
-				// }
+				let mustachesContent = (decodeURIComponent(path).match(
+					/{{(import|file|package|enum|value|message|field|oneof|option|service|rpc|extension)}}/
+				) || [,''])[1]
+				let templateContext = ['', '']
+				if (mustachesContent) {
+					templateContext = ['{{#' + mustachesContent + ' name="' + contextName + '"}}', '{{/' + mustachesContent + '}}']
+				}
 				const file = new CodeGeneratorResponse.File()
 				file.setName(name)
-				file.setContent(handlebars.compile(fs.readFileSync(path, 'utf8'), handlebarsOptions)(request, templateOptions))
+				file.setContent(handlebars.compile(
+					templateContext[0] + fs.readFileSync(path, 'utf8') + templateContext[1],
+					handlebarsOptions,
+				)(codeGenReq, templateOptions))
 				response.addFile(file)
 			} catch (error) {
 				error.message = 'Template ' + path + ': ' + error.message

@@ -1,5 +1,4 @@
+
 ifndef EXAMPLES_HELLO_WORLD_PROTO_H
 endif
 
-ifndef EXAMPLES_API_PROTO_H
-endif
