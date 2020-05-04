@@ -5,33 +5,26 @@ CREATE TABLE {{snake @package.name}}_{{snake @message.name}} {
 {{@message.recursive}}
 {{/inline}}
 
+{{~#*inline "type"}}
+	{{~#field type="string"}}VARCHAR{{/field}}
+	{{~#field type="(uint|int|fixed|sfixed)32"}}INTEGER{{/field}}
+	{{~#field type="(uint|int|fixed|sfixed)64"}}BIGINT{{/field}}
+	{{~#field type="message"}}INTEGER{{/field}}
+	{{~#field type="enum"}}INTEGER{{/field}}
+	{{~#field type="bytes"}}VARBINARY{{/field}}
+{{~/inline}}
+
 {{#*inline "column"}}
-CREATE COLUMN {{snake @field.name}} {{> @partial-block}};
+	{{~#field type="message"}}
+	CREATE COLUMN {{snake @field.name}}_id INTEGER;
+	{{else}}
+	CREATE COLUMN {{snake @field.name}} {{> type}};
+	{{/field}}
 {{/inline}}
 
-{{#*inline "type"}}
-{{#field type="repeated"}}
-	test
-{{else}}
-	{{#field type="string"}}VARCHAR{{/field}}
-	{{#field type="(uint|int|fixed|sfixed)32"}}INTEGER{{/field}}
-	{{#field type="(uint|int|fixed|sfixed)64"}}BIGINT{{/field}}
-{{/field}}
-{{/inline}}
-
-{{#package}}
-	{{#file}}
-		{{#message name="*lo"}}
-			{{#> table}}
-				{{#field label="repeated"}}
-					{{#> column}}
-					{{/column}}
-				{{/field}}
-				{{#field label="!repeated"}}
-					{{#> column}}
-					{{/column}}
-				{{/field}}
-			{{/table}}
-		{{/message}}
-	{{/file}}
-{{/package}}
+{{#message}}
+	{{#> table}}
+		{{~> column}}
+	{{/table}}
+	{{@message.recursive}}
+{{/message}}

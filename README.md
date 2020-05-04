@@ -43,28 +43,36 @@ npm install --global protoc-gen-hbs
 protoc --hbs_out="[<template_dir>:]<out_dir>" [-I<proto_paths>...] <proto_files>...
 ```
 
-### Template
+### Handlebars Template
 
-* Template file name can be of the form:
-  * `whatever.hbs` to aggregate every proto file
-  * `{{file}}.ext.hbs` to generate one file by proto file
-  * `{{package}}.ext.hbs` to generate one file by package
-  * `{{service}}.ext.hbs` to generate one file by service
-  * `{{#whatever}}{{/whatever}}.hbs` is not really recommended, but if needed, use encodeURI over it for your file system
-* Each template get CodeGeneratorRequest as input with:
-  * all file descriptors from input and imported (as protoc does with plugins)
-  * list only the current proto file used for the template in `file_to_generate`
-  * For more information look at [CodeGeneratorRequest](https://github.com/protocolbuffers/protobuf/blob/4059c61f27eb1b06c4ee979546a238be792df0a4/src/google/protobuf/compiler/plugin.proto#L68) and [FileDescriptorProto]((https://github.com/protocolbuffers/protobuf/blob/4059c61f27eb1b06c4ee979546a238be792df0a4/src/google/protobuf/descriptor.proto#L62)
+#### Filename
 
-### Helpers
+Filename should follow this form
 
-* Helpers can take a string argument to filter the descriptors used
-* Nested helpers override others inside current scope
+* `whatever.hbs` to aggregate every proto file
+* `{{file}}.ext.hbs` to generate one file by proto file
+* `{{package}}.ext.hbs` to generate one file by package
+* `{{service}}.ext.hbs` to generate one file by service
+* ...
+
+#### Context
+
+* Each template will get its proper context with accessible root context if desired
+* If the filename does not follow the canonical form, root context will be send
+
+#### Directory
+
+* By default, templates will be searched inside `./templates` folder
+* When `<template_dir>` have subdirectories where templates defined, the ouput file will be of the form `<proto_file_path>/<template_sub_dir>/<output_filename>`
+
+### Protobuf Helpers
+
+* Protobuf helpers can take parameters arguments to filter their context
 * For helpers not related with protobuf
 	* all [handlebars-helpers](helpers/handlebars-helpers) have been included
 	* better string case helpers have been added too (see [here](src/case.js))
 
-#### [{{import}}](src/import.js)
+#### [{{import}}](examples/templates/import.ts.hbs)
 
 ```handlebars
 {{#import}}
@@ -72,7 +80,7 @@ include "{{@name}}.pb.h"
 {{/import}}
 ```
 
-#### [{{package}}](src/package.js)
+#### [{{package}}](examples/templates/package.ts.hbs)
 
 ```handlebars
 {{#package}}
@@ -88,7 +96,7 @@ namespace {{@name}} {
 {{/package}}
 ```
 
-#### [{{message}}](src/message.js)
+#### [{{message}}](examples/templates/message.ts.hbs)
 
 ```handlebars
 {{#message "google.protobuf.Timestamp"}}
@@ -96,19 +104,15 @@ class {{@name}} extends DateTime {}
 {{else}}
 class {{@name}} {}
 {{/message}}
-```
 
-* By default children will get parents name as prefix:
+// By default children will get parents name as prefix:
 
-```handlebars
 {{#message}}
   {{@name}}
 {{/message}}
-```
 
-equals
+// equals
 
-```handlebars
 {{#service}}
   {{#message}}
   {{@service.name}}.{{@name}}
@@ -116,18 +120,15 @@ equals
 {{/service}}
 ```
 
-
-#### [{{field}}](src/field.js)
+#### [{{field}}](examples/templates/field.ts.hbs)
 
 ```handlebars
 {{#field}}
 const {{@name}}: {{@type}} = null
 {{/field}}
-```
 
-* You can filter fields by label or type
+// You can filter fields by label or type
 
-```handlebars
 {{#field label="repeated"}}
 const {{@name}}: Array<{{@type}}> = []
 {{/field}}
@@ -141,7 +142,7 @@ const {{@name}}: number? = undefined
 {{/field}}
 ```
 
-#### [{{enum}}](src/enum.js)
+#### [{{enum}}](examples/templates/enum.ts.hbs)
 
 ```handlebars
 {{#enum}}
@@ -153,7 +154,7 @@ enum {{@name}} {
 {{/enum}}
 ```
 
-#### [{{service}}](src/service.js)
+#### [{{service}}](examples/templates/service.ts.hbs)
 
 ```handlebars
 {{#service}}
@@ -163,7 +164,7 @@ interface {{@name}} {
 {{/service}}
 ```
 
-#### [{{rpc}}](src/rpc.js)
+#### [{{rpc}}](examples/templates/rpc.ts.hbs)
 
 ```handlebars
 {{#rpc}}
@@ -178,7 +179,7 @@ interface {{@name}} {
 {{/rpc}}
 ```
 
-#### [{{option}}](src/option.js)
+#### [{{option}}](examples/templates/option.ts.hbs)
 
 ```handlebars
 {{#message}}

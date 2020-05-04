@@ -216,6 +216,8 @@ module.exports.mapType = mapType
 
 const mapField = (context, options, callback) => {
 	switch (Object.getPrototypeOf(context).constructor) {
+		case FieldDescriptorProto:
+			return [context].map(callback)
 		case DescriptorProto:
 			return context.getFieldList().map(callback)
 		case FileDescriptorProto:
