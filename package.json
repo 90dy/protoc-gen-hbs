@@ -5,6 +5,7 @@
 	"bin": "src/main.js",
 	"license": "Apache 2.0",
 	"scripts": {
+		"postinstall": "make .mk",
 		"gen:examples": "make gen.protoc.hbs"
 	},
 	"dependencies": {

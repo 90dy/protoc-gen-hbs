@@ -1,3 +1,9 @@
+# Custom
+.buf
+buf.yaml
+.yarn/
+.yarnrc.yml
+
 # Logs
 logs
 *.log
