@@ -1,6 +1,6 @@
 # protoc-gen-hbs
 
-🏃‍♀️ Fast and simple protobuf generation with handlebars and some helpers
+🏃‍♀️ Fast and easy protobuf generation with handlebars and some helpers
 
 ## Why ?
 
@@ -69,8 +69,8 @@ Filename should follow this form
 
 * Protobuf helpers can take parameters arguments to filter their context
 * For helpers not related with protobuf
-	* all [handlebars-helpers](helpers/handlebars-helpers) have been included
-	* better string case helpers have been added too (see [here](src/case.js))
+  * all [handlebars-helpers](helpers/handlebars-helpers) have been included
+  * better string case helpers have been added too (see [here](src/case.js))
 
 #### [{{import}}](examples/templates/import.ts.hbs)
 
@@ -130,6 +130,7 @@ const {{@name}}: {{@type}} = null
 // You can filter fields by label or type
 
 {{#field label="repeated"}}
+// TODO: convert type
 const {{@name}}: Array<{{@type}}> = []
 {{/field}}
 
@@ -168,14 +169,16 @@ interface {{@name}} {
 
 ```handlebars
 {{#rpc}}
-  const {{@name}} = (request: {{@request.type}}): Promise<{{@response.type}}> => {
+  // TODO: convert input and output type
+  const {{@name}} = (request: {{@input}}): Promise<{{@output}}> => {
     // do stuff
   }
 {{/rpc}}
 
 // filter by request/response type
 {{#rpc client="unary" server="stream"}}
-  const {{@name}} = (request: {{@request.type}}, (response: {{@response.type}}) => void): Promise<void>
+  // TODO: convert input and output type
+  const {{@name}} = (request: {{@input}}, (response: {{@output}} => void): Promise<void>
 {{/rpc}}
 ```
 
