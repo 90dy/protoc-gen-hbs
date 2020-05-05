@@ -1589,7 +1589,7 @@ __metadata:
     mem: ^6.1.0
     minimatch: ^3.0.4
   bin:
-    protoc-gen-hbs: src/main.js
+    protoc-gen-hbs: bin/protoc-gen-hbs
   languageName: unknown
   linkType: soft
 

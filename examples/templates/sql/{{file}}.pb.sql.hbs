@@ -22,9 +22,11 @@ CREATE TABLE {{snake @package.name}}_{{snake @message.name}} {
 	{{/field}}
 {{/inline}}
 
-{{#message}}
-	{{#> table}}
-		{{~> column}}
-	{{/table}}
-	{{@message.recursive}}
-{{/message}}
+{{#package}}
+	{{#message}}
+		{{#> table}}
+			{{~> column}}
+		{{/table}}
+		{{@message.recursive}}
+	{{/message}}
+{{/package}}

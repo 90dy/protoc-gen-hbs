@@ -1,6 +1,6 @@
 {
 	"name": "protoc-gen-hbs",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"description": "protoc-gen-hbs",
 	"bin": "bin/protoc-gen-hbs",
 	"license": "Apache 2.0",
