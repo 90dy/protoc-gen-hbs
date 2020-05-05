@@ -38,14 +38,15 @@ module.exports.mapDependency = mapDependency
 const mapPackage = (context, options, callback) => {
 	const packageList = {}
 	return mapFile(context, options, fileDesc => {
-		if (!packageList[fileDesc.package]) {
-			packageList[fileDesc.package] = options.data.root.clone()
-			packageList[fileDesc.package].setProtoFileList([fileDesc])
-			packageList[fileDesc.package].setFileToGenerateList([fileDesc.getName()])
-			return packageList[fileDesc.package]
+		const package = fileDesc.getPackage()
+		if (!packageList[package]) {
+			packageList[package] = options.data.root.clone()
+			packageList[package].setProtoFileList([fileDesc])
+			packageList[package].setFileToGenerateList([fileDesc.getName()])
+			return packageList[package]
 		}
-		packageList[fileDesc.package].addFileToGenerate(fileDesc.getName())
-		packageList[fileDesc.package].addProtoFile(fileDesc)
+		packageList[package].addFileToGenerate(fileDesc.getName())
+		packageList[package].addProtoFile(fileDesc)
 	}).filter(_ => _).map(callback)
 }
 module.exports.mapPackage = mapPackage
