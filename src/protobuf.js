@@ -53,12 +53,13 @@ module.exports.mapPackage = mapPackage
 
 const mapMessage = (context, options, callback) => {
 	switch (Object.getPrototypeOf(context).constructor) {
-		case FieldDescriptorProto:
-			return mapType(context, options, type => {
-				if (type === 'message') {
-					return []
-				}
-			}).flat(Infinity).filter(_ => _)
+		// TODO: get message from field type
+		// case FieldDescriptorProto:
+		//	return mapType(context, options, type => {
+		//		if (type === 'message') {
+		//			return [].map(callback)
+		//		}
+		//	}).flat(Infinity).filter(_ => _)
 		case DescriptorProto:
 			return context.getNestedTypeList().map(callback)
 		case FileDescriptorProto:
@@ -306,7 +307,7 @@ const applyAsParentContext = (context, fileDesc, options, callback) => (value, i
 }
 module.exports.applyAsParentContext = applyAsParentContext
 
-const applyOptionsIteratorData = (options) => (value, index, array, key) => {
+const applyOptionsIteratorData = (options, callback) => (value, index, array, key) => {
 	let data = {
 		...options.data,
 		key,
@@ -326,7 +327,7 @@ const applyOptionsIteratorData = (options) => (value, index, array, key) => {
 			break
 		case FileDescriptorProto:
 			data.file = {
-				name: value.getName()
+				name: value.getName().replace(/.proto$/, '')
 			}
 			data = { ...data, ...data.file }
 			break
@@ -338,7 +339,7 @@ const applyOptionsIteratorData = (options) => (value, index, array, key) => {
 					return mapMessage(
 						value,
 						recursiveOptions,
-						applyOptionsIteratorData(options)
+						applyOptions(options)
 					).join('\n')
 				},
 			}
@@ -390,6 +391,11 @@ const applyOptionsIteratorData = (options) => (value, index, array, key) => {
 		default:
 			break
 	}
+	return callback(value, { data })
+}
+module.exports.applyOptionsIteratorData = applyOptionsIteratorData
+
+const matchOptionsHash = (options, trueMatch, falseMatch) => (value, { data }) => {
 	if (Object.entries(options.hash).every(([key, value]) => {
 		switch (typeof value) {
 			case 'string':
@@ -398,76 +404,57 @@ const applyOptionsIteratorData = (options) => (value, index, array, key) => {
 				return data[key] === value
 		}
 	})) {
-		return options.fn(value, { data })
-	} else if (options.inverse) {
-		return options.inverse(value, { data })
+		return trueMatch(value, { data })
+	} else if (falseMatch) {
+		return falseMatch(value, { data })
 	} else {
 		return ''
 	}
 }
-module.exports.applyOptionsIteratorData = applyOptionsIteratorData
+module.exports.matchOptionsHash = matchOptionsHash
 
-const applyOptions = (context, options) => {
-	if (typeof context !== 'object') {
-		return !options.fn
-			? _ => _
-			: applyOptionsIteratorData(options)
-	}
-	switch (Object.getPrototypeOf(context).constructor) {
-		case CodeGeneratorRequest:
-			if (context !== options.data.root) {
-				// context === package
-				return !options.fn
-					? _ => {
-						const file = _.getProtoFileList()[0]
-						return file
-							? file.getPackage()
-							: ''
-					} : applyOptionsIteratorData(options)
-			}
-		default:
-			return !options.fn
-				? _ => _.getName()
-				: applyOptionsIteratorData(options)
-	}
+const applyOptions = (options) => {
+	return options.fn
+		? applyOptionsIteratorData(options, matchOptionsHash(options, options.fn, options.inverse))
+		: applyOptionsIteratorData(options, matchOptionsHash(options, (_, { data }) => data.name))
 }
 
 module.exports.register = handlebars => {
 	handlebars.registerHelper('import', function (options) {
-		return mapDependency(this, options, applyOptions(this, options)).join('\n')
+		return mapDependency(this, options, applyOptions(options)).join('\n')
 	})
 	handlebars.registerHelper('file', function (options) {
-		return mapFile(this, options, applyOptions(this, options)).join('\n')
+		return mapFile(this, options, applyOptions(options)).join('\n')
 	})
 	handlebars.registerHelper('package', function (options) {
-		return mapPackage(this, options, applyOptions(this, options)).join('\n')
+		return mapPackage(this, options, applyOptions(options)).join('\n')
 	})
 	handlebars.registerHelper('enum', function (options) {
-		return mapEnum(this, options, applyOptions(this, options)).join('\n')
+		return mapEnum(this, options, applyOptions(options)).join('\n')
 	})
 	handlebars.registerHelper('value', function (options) {
-		return mapValue(this, options, applyOptions(this, options)).join('\n')
+		return mapValue(this, options, applyOptions(options)).join('\n')
 	})
 	handlebars.registerHelper('message', function (options) {
-		return mapMessage(this, options, applyOptions(this, options)).join('\n')
+		return mapMessage(this, options, applyOptions(options)).join('\n')
 	})
 	handlebars.registerHelper('field', function (options) {
-		return mapField(this, options, applyOptions(this, options)).join('\n')
+		return mapField(this, options, applyOptions(options)).join('\n')
 	})
 	handlebars.registerHelper('oneof', function (options) {
-		return mapOneOf(this, options, applyOptions(this, options)).join('\n')
+		return mapOneOf(this, options, applyOptions(options)).join('\n')
 	})
 	handlebars.registerHelper('option', function (options) {
-		return mapOption(this, options, applyOptions(this, options)).join('\n')
+		return mapOption(this, options, applyOptions(options)).join('\n')
 	})
 	handlebars.registerHelper('service', function (options) {
-		return mapService(this, options, applyOptions(this, options)).join('\n')
+		return mapService(this, options, applyOptions(options)).join('\n')
 	})
 	handlebars.registerHelper('rpc', function (options) {
-		return mapRPC(this, options, applyOptions(this, options)).join('\n')
+		return mapRPC(this, options, applyOptions(options)).join('\n')
 	})
 	handlebars.registerHelper('extension', function (options) {
-		return mapExtension(this, options, applyOptions(this, options)).join('\n')
+		return mapExtension(this, options, applyOptions(options)).join('\n')
 	})
 }
 
