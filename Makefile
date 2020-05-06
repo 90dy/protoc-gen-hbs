@@ -6,16 +6,16 @@ protoc.hbs/template_dir := ./examples/templates
 -include .mk/yarn.mk
 
 .PHONY: install
-install: .mk
+install: .mk install.yarn
 
 .mk:
 	git clone git@github.com:gponsinet/make-everything $@
 	$(MAKE) install
 
-$(yarn.path)/node_modules/protoc-gen-hbs: $(yarn.path)/node_modules/.bin/protoc-gen-hbs
+$(yarn.mod)/protoc-gen-hbs: $(yarn.bin)/protoc-gen-hbs
 	[ -e "$(dir $@)" ] || mkdir -p $@
 
-$(yarn.path)/node_modules/.bin/protoc-gen-hbs: install.yarn
+$(yarn.bin)/protoc-gen-hbs: install.yarn
 	[ -e "$(dir $@)" ] || mkdir -p $(dir $@)
 	ln -sf ../../src/main.js $@
 
