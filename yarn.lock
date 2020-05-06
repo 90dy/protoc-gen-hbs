@@ -11,6 +11,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/google-protobuf@npm:^3.7.2":
+  version: 3.7.2
+  resolution: "@types/google-protobuf@npm:3.7.2"
+  checksum: 3/f0fa25be9ae3b443d5ffb251426937bf12252d63181a3e42aca7de823b8b2743eb30fca761b897f21dedc4f003bad255979200cb30e19c4858118d207f56b5e3
+  languageName: node
+  linkType: hard
+
 "ansi-bgblack@npm:^0.1.1":
   version: 0.1.1
   resolution: "ansi-bgblack@npm:0.1.1"
@@ -1580,6 +1587,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "protoc-gen-hbs@workspace:."
   dependencies:
+    "@types/google-protobuf": ^3.7.2
     case: ^1.6.3
     dree: ^2.4.14
     fs-extra: ^9.0.0
