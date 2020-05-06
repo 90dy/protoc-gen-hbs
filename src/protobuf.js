@@ -363,6 +363,7 @@ const applyOptionsIteratorData = (options, callback) => (value, index, array, ke
 				name: value.getName(),
 				type: mapType(value, _ => _),
 				label: mapLabel(value, _ => _),
+				number: value.getNumber(),
 			}
 			data = { ...data, ...data.field }
 			break

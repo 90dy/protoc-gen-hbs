@@ -1,6 +1,6 @@
 {
 	"name": "protoc-gen-hbs",
-	"version": "1.0.4",
+	"version": "1.0.5",
 	"description": "protoc-gen-hbs",
 	"bin": "bin/protoc-gen-hbs",
 	"license": "Apache 2.0",
@@ -17,5 +17,8 @@
 		"handlebars-helpers": "^0.10.0",
 		"mem": "^6.1.0",
 		"minimatch": "^3.0.4"
+	},
+	"devDependencies": {
+		"@types/google-protobuf": "^3.7.2"
 	}
 }
