@@ -63,7 +63,7 @@ Filename should follow this form
 #### Directory
 
 * By default, templates will be searched inside `./templates` folder
-* When `<template_dir>` have subdirectories where templates defined, the ouput file will be of the form `<proto_file_path>/<template_sub_dir>/<output_filename>`
+* When `<template_dir>` have subdirectories where templates are defined, the ouput file will be of the form `<proto_file_path>/<template_sub_dir>/<output_filename>`
 
 ### Protobuf Helpers
 
