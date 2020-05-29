@@ -6,12 +6,10 @@ CREATE TABLE examples_hello {
 	
 		CREATE COLUMN there_id INTEGER;
 };
-		
-CREATE TABLE examples_world {
+		CREATE TABLE examples_world {
 		CREATE COLUMN hello_world VARCHAR;
 };
 		
-
 
 CREATE TABLE examples_there {
 		CREATE COLUMN hello_there VARCHAR;

@@ -1,0 +1,41 @@
+use futures::Stream;
+use std::ping::Pin;
+use tonic::{transport::Server, Request, Response, Status};
+
+pub mod pb {
+	tonic::include_proto("{{@file.name}}")
+}
+
+#[derive(Default)]
+pub struct {{@name}}Impl {}
+
+type ResponseStream<T> = Response<Pin<Box<dyn Stream<Item = Result<Response<T>>>>>>
+
+#[tonic::async_trait]
+impl {{@name}} for {{pascal @name}}Impl {
+	{{#rpc client="unary" server="unary"}}
+	async fn {{snake @name}}(&self, _: Request<{{@input}}>) -> Result<<Response<{{@output}}>, Status> {
+		Err(Status::unimplemented("Not yet implemented"));
+	}
+	{{else rpc client="unary" server="stream"}}
+	async fn {{snake @name}}(&self, _: Request<{{@input}}>) -> Result<ResponseStream<{{@output}}>, Status> {
+		Err(Status::unimplemented("Not yet implemented"));
+	}
+	{{else rpc client="stream" server="unary"}}
+	async fn {{snake @name}}(&self, _: Request<Streaming<{{@input}}>>) -> Result<Response<{{@output}}>, Status> {
+		Err(Status::unimplemented("Not yet implemented"));
+	}
+	{{else rpc client="stream" server="stream"}}
+	async fn {{snake @name}}(&self, _: Request<Streaming<{{@input}}>>) -> Result<ResponseStream<{{@output}}>, Status> {
+		Err(Status::unimplemented("Not yet implemented"));
+	}
+	{{/rpc}}
+}
+
+async fn serve_{{snake @name}}(addr: String) -> Result<(), Box<dyn std::error:Error>> {
+	Server::builder()
+		.add_service({{@name}}Server::new({{@name}}::default()))
+		.serve(addr)
+		.await?;
+	Ok(())
+}

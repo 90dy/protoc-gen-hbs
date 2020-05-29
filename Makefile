@@ -1,5 +1,6 @@
 # See https://github.com/gponsinet/make-everything
 
+
 protoc.hbs/template_dir := ./examples/templates
 
 -include .mk/protoc.mk

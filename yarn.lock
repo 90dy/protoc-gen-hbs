@@ -18,6 +18,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/node@npm:*":
+  version: 14.0.6
+  resolution: "@types/node@npm:14.0.6"
+  checksum: 3/14c184ce392941d016aa94479eca2d33517756a9e48d0b03ba6e258128b513dc28dc524f85cc0591e12be9d804beff6aadc4b3159555c6ffdd1d1ab8f46d41da
+  languageName: node
+  linkType: hard
+
+"@types/sha1@npm:1.1.2":
+  version: 1.1.2
+  resolution: "@types/sha1@npm:1.1.2"
+  dependencies:
+    "@types/node": "*"
+  checksum: 3/d49b72ddb6299be075d3652f4c4528833dd21116eceb6bdf133c38e1d1d3cf24f109df2b90aad1d32ea8c4a2ee4889a30834afc674013844b85f348ee0680f88
+  languageName: node
+  linkType: hard
+
 "ansi-bgblack@npm:^0.1.1":
   version: 0.1.1
   resolution: "ansi-bgblack@npm:0.1.1"
@@ -472,6 +488,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"charenc@npm:>= 0.0.1":
+  version: 0.0.2
+  resolution: "charenc@npm:0.0.2"
+  checksum: 3/ff8199e90334dc7bb60a9fe0aa2bef3e72b1d125e801151459db1cf1c9b77c437ad4a5d9248ee0003720bcb537a90787a53f6e2e1613dbf5fba46f59d5547307
+  languageName: node
+  linkType: hard
+
 "class-utils@npm:^0.3.5":
   version: 0.3.6
   resolution: "class-utils@npm:0.3.6"
@@ -574,6 +597,13 @@ __metadata:
     isobject: ^3.0.0
     lazy-cache: ^2.0.2
   checksum: 3/72a876333ffce73c91d49ff63c3de013b24b4ff123c0243c8db34185ddd08f87d1892c68c7380f7e5427afb7cbedd0c9366102a7300310818bc35eb39240b777
+  languageName: node
+  linkType: hard
+
+"crypt@npm:>= 0.0.1":
+  version: 0.0.2
+  resolution: "crypt@npm:0.0.2"
+  checksum: 3/1ad9c8439ad26eef21ca130df3e79fff4915e839167efde163891b935ffb41742bfbc359bb00ae8b1ff205db52e7fb0e32326b84b7f977cd6e6a279eed9dc742
   languageName: node
   linkType: hard
 
@@ -1588,6 +1618,7 @@ __metadata:
   resolution: "protoc-gen-hbs@workspace:."
   dependencies:
     "@types/google-protobuf": ^3.7.2
+    "@types/sha1": 1.1.2
     case: ^1.6.3
     dree: ^2.4.14
     fs-extra: ^9.0.0
@@ -1596,6 +1627,8 @@ __metadata:
     handlebars-helpers: ^0.10.0
     mem: ^6.1.0
     minimatch: ^3.0.4
+    sha1: ^1.1.1
+    typescript: latest
   bin:
     protoc-gen-hbs: bin/protoc-gen-hbs
   languageName: unknown
@@ -1737,6 +1770,16 @@ __metadata:
     is-plain-object: ^2.0.3
     split-string: ^3.0.1
   checksum: 3/a97a99a00cc5ed3034ccd690ff4dde167e4182ec4ef2fd5277637a6e388839292559301408b91405534b44e76450bdd443ac95427fde40e9a1a62102c1262bd1
+  languageName: node
+  linkType: hard
+
+"sha1@npm:^1.1.1":
+  version: 1.1.1
+  resolution: "sha1@npm:1.1.1"
+  dependencies:
+    charenc: ">= 0.0.1"
+    crypt: ">= 0.0.1"
+  checksum: 3/e46b64f013bd8b0aa13f287f16de677ecc6cef4c17f181ca5a1b58c97dbe952f1922428b226b90fd6f309f67ad1bb38b070eeba5320b787825f64e65f7424c2c
   languageName: node
   linkType: hard
 
@@ -1940,6 +1983,26 @@ __metadata:
   dependencies:
     kind-of: ^3.1.0
   checksum: 3/72176f68c53003f88f6c9a7a80407f01139cca10e28efe9ea0028bfbcf6e133a75fb357900ed1b777e83f0a2f8cd07fd1cb7e144faf399910aca0b01a5e767ad
+  languageName: node
+  linkType: hard
+
+typescript@latest:
+  version: 3.9.3
+  resolution: "typescript@npm:3.9.3"
+  bin:
+    tsc: bin/tsc
+    tsserver: bin/tsserver
+  checksum: 3/f05e6f1c50c635bd7afc95fbc9eb704042b5bec9a77b9c86ddc0c56650c928617d608b9ec9aa468d7b4cf14ac1ea5f540c540c725005a179b54a86665abd9a55
+  languageName: node
+  linkType: hard
+
+"typescript@patch:typescript@latest#builtin<compat/typescript>":
+  version: 3.9.3
+  resolution: "typescript@patch:typescript@npm%3A3.9.3#builtin<compat/typescript>::version=3.9.3&hash=8cac75"
+  bin:
+    tsc: bin/tsc
+    tsserver: bin/tsserver
+  checksum: 3/a3780f6fdf0502bb152a3ad56cd004db46f70496f1b8317657d9e89dd93c911483625fd25867d6aec1cd2854ccf036ecc614989c9f1b36bec2d5daffa9bfc230
   languageName: node
   linkType: hard
 
