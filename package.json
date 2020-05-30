@@ -16,9 +16,12 @@
 		"handlebars": "^4.7.6",
 		"handlebars-helpers": "^0.10.0",
 		"mem": "^6.1.0",
-		"minimatch": "^3.0.4"
+		"minimatch": "^3.0.4",
+		"sha1": "^1.1.1",
+		"typescript": "latest"
 	},
 	"devDependencies": {
-		"@types/google-protobuf": "^3.7.2"
+		"@types/google-protobuf": "^3.7.2",
+		"@types/sha1": "1.1.2"
 	}
 }

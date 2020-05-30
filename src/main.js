@@ -8,6 +8,7 @@ const fs = require('fs')
 const pbHelpers = require('./protobuf')
 const caseHelpers = require('./case')
 const path = require('path')
+const sha1 = require('sha1')
 
 const handlebarsOptions = {
 	// data: false,
@@ -38,82 +39,78 @@ try {
 	requestUint8Array.set(requestBuffer)
 
 	const request = CodeGeneratorRequest.deserializeBinary(requestUint8Array)
-	const response = new CodeGeneratorResponse()
 
-	const fileDescriptorMap = request.getFileToGenerateList().reduce((map, name) => {
-		map[name] = request.getProtoFileList().find(_ => _.getName() === name)
-		return map
-	}, {})
-
-	const templateMap = {}
-	const templateDir = path.resolve(request.getParameter() || process.cwd() + '/templates')
-
-	dree.scan(request.getParameter() || process.cwd() + '/templates', { extensions: ['hbs'] }, template => {
-		templateMap[template.path] = {}
-		Object.values(fileDescriptorMap).forEach((fileDescriptor) => {
-			let output = ''
-			let mustaches = (decodeURIComponent(template.name).match(/{{.*}}/) || [''])[0]
-			if (mustaches) {
-				output = compileMustaches(request, mustaches, handlebarsOptions, templateOptions)
-			} else {
-				output = template.name + '\n'
-			}
-			output.split('\n').filter(_ => _).forEach(_ => {
-				const fileDescPath = path.dirname(fileDescriptor.getName())
-				const templateSubPath =  path.dirname(template.path).replace(templateDir, '')
-				let fileName = template.name
-				if (mustaches) {
-					fileName = fileName.split(mustaches)
-					fileName.splice(1, 0, _)
-					fileName = fileName.join('')
-				}
-				fileName = fileName.replace(/\.hbs$/, '')
-				fileName = fileName.replace(fileDescPath + '/', '')
-				fileName = path.join(fileDescPath, templateSubPath, fileName)
-
-				if (!templateMap[template.path][fileName]) {
-					templateMap[template.path][fileName] = (() => {
-							const templateRequest = {
-								codeGenReq: request.clone(),
-								contextName: _,
-							}
-							templateRequest.codeGenReq.setFileToGenerateList([
-								fileDescriptor.getName()
-							])
-							return templateRequest
-						})()
-				} else {
-					templateMap[template.path][fileName]
-						.codeGenReq
-						.addFileToGenerate(fileDescriptor.getName())
-				}
-			})
+	// get templates
+	const templates = {
+		directory: '',
+		list: [],
+	}
+	templates.directory = path.resolve(request.getParameter() || './templates'),
+	templates.list = (() => {
+		const _ = []
+		dree.scan(templates.directory, { extensions: ['hbs'] }, template => _.push(template))
+		return _.map(template => {
+			template.relativePath = path.relative(templates.directory, template.path)
+			return template
 		})
+	})()
+
+	// decode relative path
+	templates.list.map(template => {
+		template.decodedRelativePath = decodeURIComponent(template.relativePath)
+		return template
 	})
 
-	Object.entries(templateMap).forEach(([path, fileNameMap]) =>
-		Object.entries(fileNameMap).forEach(([name, { contextName, codeGenReq }]) => {
-			try {
-				let mustachesContent = (decodeURIComponent(path).match(
-					/{{(import|file|package|enum|value|message|field|oneof|option|service|rpc|extension)}}/
-				) || [,''])[1]
-				let templateContext = ['', '']
-				if (mustachesContent) {
-					templateContext = ['{{#' + mustachesContent + ' name="' + contextName + '"}}', '{{/' + mustachesContent + '}}']
-				}
-				const file = new CodeGeneratorResponse.File()
-				file.setName(name)
-				file.setContent(handlebars.compile(
-					templateContext[0] + fs.readFileSync(path, 'utf8') + templateContext[1],
-					handlebarsOptions,
-				)(codeGenReq, templateOptions))
-				response.addFile(file)
-			} catch (error) {
-				error.message = 'Template ' + path + ': ' + error.message
-				throw error
-			}
+	// compile template
+	templates.list = templates.list.map(template => {
+		template.mustaches = template.decodedRelativePath.match(
+			/{{.*import|file|package|enum|value|message|field|oneof|option|service|rpc|extension.*}}/g
+		)
+		template.mustachesContent = template.mustaches.map(mustache => mustache.replace('{{', '').replace('}}', ''))
+		template.start = template.mustachesContent.map(_ => '{{#' + _ + '}}').join('')
+		template.end = template.mustachesContent.map(_ => '{{/' + _ + '}}').reverse().join('')
+		template.contentName = template.decodedRelativePath.replace(
+			/{{(.*?)(import|file|package|enum|value|message|field|oneof|option|service|rpc|extension)}}/g,
+			'{{$1@$2.name}}'
+		).replace(/.hbs$/, '') + '\n'
+		template.content = fs.readFileSync(template.path, 'utf8')
+		template.delimiter = 'PROTOC_GEN_HBS_GENERATED_FILE:' + sha1(template.content) + ':' + template.contentName
+		template.mergedContent =
+			template.start +
+				template.delimiter +
+				template.content +
+				template.end
+		template.result = compileMustaches(
+			request,
+			template.mergedContent,
+			handlebarsOptions,
+			templateOptions,
+		)
+		return template
+	})
+	// console.error(templates)
+
+	// create generated files
+	const generatedFiles = {}
+	templates.list.map(template => {
+		const list = template.result.split(
+			'PROTOC_GEN_HBS_GENERATED_FILE:' + sha1(template.content) + ':'
+		).filter(_ => _ !== '')
+		list.forEach(content => {
+			const filename = content.split('\n')[0]
+			generatedFiles[filename] = content.replace(new RegExp('^' + filename), '')
 		})
-	)
+	})
+	// console.error(generatedFiles)
+
+	// send response
+	const response = new CodeGeneratorResponse()
+	Object.entries(generatedFiles).forEach(([name, content]) => {
+		const file = new CodeGeneratorResponse.File()
+		file.setName(name)
+		file.setContent(content)
+		response.addFile(file)
+	})
 
 	process.stdout.write(Buffer.from(response.serializeBinary()))
 } catch (err) {
