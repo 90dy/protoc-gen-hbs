@@ -45,25 +45,27 @@ protoc --hbs_out="[<template_dir>:]<out_dir>" [-I<proto_paths>...] <proto_files>
 
 ### Handlebars Template
 
-#### Filename
+#### Paths
 
-Filename should follow this form
+Template paths should follow this form
 
-* `whatever.hbs` to aggregate every proto file
+* `whatever.hbs` will aggregate every proto file
 * `{{file}}.ext.hbs` to generate one file by proto file
 * `{{package}}.ext.hbs` to generate one file by package
 * `{{service}}.ext.hbs` to generate one file by service
+* `{{file}}/{{message}}.ext.hbs` will iterate over messages of files
+* `{{file}}/{{service}}.ext.hbs` will iterate over file and services
 * ...
 
 #### Context
 
 * Each template will get its proper context with accessible root context if desired
-* If the filename does not follow the canonical form, root context will be send
+* Handlebars root context will be the scope of the file path
+.e.g: `{{file}}/{{service}}.ext.hbs` will send service as root context
 
 #### Directory
 
-* By default, templates will be searched inside `./templates` folder
-* When `<template_dir>` have subdirectories where templates are defined, the ouput file will be of the form `<proto_file_path>/<template_sub_dir>/<output_filename>`
+* User is free to define directory path with template paths
 
 ### Protobuf Helpers
 
