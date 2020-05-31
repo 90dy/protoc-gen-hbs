@@ -236,12 +236,17 @@ module.exports.mapField = mapField
 
 const mapExtension = (context, options, callback) => {
 	switch (Object.getPrototypeOf(context).constructor) {
+		case FieldDescriptorProto:
+			return [context].map(callback)
 		case DescriptorProto:
-		case FileDescriptorProto:
 			return context.getExtensionList().map(callback)
+		case FileDescriptorProto:
+			return context.getMessageTypeList().map(message => {
+				return mapExtension(message, options, applyAsParentContext(message, context, options, callback))
+			}).flat(Infinity)
 		default:
 			return mapFile(context, options, fileDesc => {
-				return mapExtension(fileDesc, options, callback)
+				return mapExtension(fileDesc, options, applyAsParentContext(context, fileDesc, options, callback))
 			}).flat(Infinity)
 	}
 }
