@@ -14,10 +14,7 @@ This is why this project exists.
 
 ## Philosophy
 
-* Newbie-friendly
-* Less configs as possible
-* Maintainable
-* Happy protobuf developpers :smile:
+* Simple to use, simpler to maintain
 
 ## Installation
 
@@ -41,40 +38,39 @@ npm install --global protoc-gen-hbs
 
 ```
 protoc --hbs_out="[<template_dir>:]<out_dir>" [-I<proto_paths>...] <proto_files>...
+
+Options:
+  out_dir         Path where to generate output files
+  templates_dir   Path where to store templates (default: ./templates)
+  proto_paths     Paths where to find your protos
+  proto_files     Proto files to use for generation
 ```
 
-### Handlebars Template
+### Templates
 
-#### Paths
+#### Paths Definition
 
-Template paths should follow this form
+Path definition is very free to you, all you must know is that we parse it to send the right context and create the right path to generate files.
 
-* `whatever.hbs` will aggregate every proto file
-* `{{file}}.ext.hbs` to generate one file by proto file
-* `{{package}}.ext.hbs` to generate one file by package
-* `{{service}}.ext.hbs` to generate one file by service
-* `{{file}}/{{message}}.ext.hbs` will iterate over messages of files
-* `{{file}}/{{service}}.ext.hbs` will iterate over file and services
+Some examples:
+
+* `whatever.ext.hbs` will generate `whatever.ext` with all `proto_files` as context
+* `{{file}}.ext.hbs` will generate one file by `proto_files` and send the right file as context
+* `{{import}}.ext.hbs` will generate one file by `import` (don't know if it's really useful but yes it's possible)
+* `{{file}}/{{message}}.ext.hbs` will generate one file by `message` and send the message as context and `<file>` as path
+* `{{file}}/{{service}}/{{rpc}}.ext.hbs` will generate one file by rpc with the right context and `<file>/<service>` as path
 * ...
 
-#### Context
+### Helpers
 
-* Each template will get its proper context with accessible root context if desired
-* Handlebars root context will be the scope of the file path
-.e.g: `{{file}}/{{service}}.ext.hbs` will send service as root context
+#### Protobuf
 
-#### Directory
+Protobuf helpers was thought as easy to use as possible
+* They are all iterators
+* They can take parameters as arguments to filter by name or specific field
+* Parameters can be globs for strings
 
-* User is free to define directory path with template paths
-
-### Protobuf Helpers
-
-* Protobuf helpers can take parameters arguments to filter their context
-* For helpers not related with protobuf
-  * all [handlebars-helpers](helpers/handlebars-helpers) have been included
-  * better string case helpers have been added too (see [here](src/case.js))
-
-#### [{{import}}](examples/templates/import.ts.hbs)
+##### [{{import}}](templates/examples/import.ts.hbs)
 
 ```handlebars
 {{#import}}
@@ -82,7 +78,7 @@ include "{{@name}}.pb.h"
 {{/import}}
 ```
 
-#### [{{package}}](examples/templates/package.ts.hbs)
+##### [{{package}}](templates/examples/package.ts.hbs)
 
 ```handlebars
 {{#package}}
@@ -98,7 +94,7 @@ namespace {{@name}} {
 {{/package}}
 ```
 
-#### [{{message}}](examples/templates/message.ts.hbs)
+##### [{{message}}](templates/examples/message.ts.hbs)
 
 ```handlebars
 {{#message "google.protobuf.Timestamp"}}
@@ -122,7 +118,7 @@ class {{@name}} {}
 {{/service}}
 ```
 
-#### [{{field}}](examples/templates/field.ts.hbs)
+##### [{{field}}](templates/examples/field.ts.hbs)
 
 ```handlebars
 {{#field}}
@@ -145,7 +141,30 @@ const {{@name}}: number? = undefined
 {{/field}}
 ```
 
-#### [{{enum}}](examples/templates/enum.ts.hbs)
+##### [{{extension}}](templates/examples/extension.ts.hbs)
+
+```handlebars
+{{#extension}}
+const {{@name}}: {{@type}} = null
+{{/extension}}
+
+// You can filter extensions by label or type
+
+{{#extension label="repeated"}}
+// TODO: convert type
+const {{@name}}: Array<{{@type}}> = []
+{{/extension}}
+
+{{#extension type="string"}}
+const {{@name}}: string = ''
+{{/extension}}
+
+{{#extension label="optional" type="number"}}
+const {{@name}}: number? = undefined
+{{/extension}}
+```
+
+##### [{{enum}}](templates/examples/enum.ts.hbs)
 
 ```handlebars
 {{#enum}}
@@ -157,7 +176,7 @@ enum {{@name}} {
 {{/enum}}
 ```
 
-#### [{{service}}](examples/templates/service.ts.hbs)
+##### [{{service}}](templates/examples/service.ts.hbs)
 
 ```handlebars
 {{#service}}
@@ -167,7 +186,7 @@ interface {{@name}} {
 {{/service}}
 ```
 
-#### [{{rpc}}](examples/templates/rpc.ts.hbs)
+##### [{{rpc}}](templates/examples/rpc.ts.hbs)
 
 ```handlebars
 {{#rpc}}
@@ -184,7 +203,7 @@ interface {{@name}} {
 {{/rpc}}
 ```
 
-#### [{{option}}](examples/templates/option.ts.hbs)
+##### [{{option}}](templates/examples/option.ts.hbs)
 
 ```handlebars
 {{#message}}
@@ -195,6 +214,14 @@ const {{@name}} = {
 }
 {{/message}}
 ```
+
+#### Others
+
+For helpers not related with protobuf
+
+* All [handlebars-helpers](helpers/handlebars-helpers) have been included
+* Better string case helpers have been added too (see [here](src/case.js))
+
 
 
 ## Contributing

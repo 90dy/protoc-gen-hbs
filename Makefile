@@ -1,8 +1,5 @@
 # See https://github.com/gponsinet/make-everything
 
-
-protoc.hbs/template_dir := ./examples/templates
-
 -include .mk/protoc.mk
 -include .mk/yarn.mk
 
