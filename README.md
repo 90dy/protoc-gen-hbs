@@ -70,7 +70,7 @@ Protobuf helpers was thought as easy to use as possible
 * They can take parameters as arguments to filter by name or specific field
 * Parameters can be globs for strings
 
-##### [{{import}}](examples/templates/import.ts.hbs)
+##### [{{import}}](templates/examples/import.ts.hbs)
 
 ```handlebars
 {{#import}}
@@ -78,7 +78,7 @@ include "{{@name}}.pb.h"
 {{/import}}
 ```
 
-##### [{{package}}](examples/templates/package.ts.hbs)
+##### [{{package}}](templates/examples/package.ts.hbs)
 
 ```handlebars
 {{#package}}
@@ -94,7 +94,7 @@ namespace {{@name}} {
 {{/package}}
 ```
 
-##### [{{message}}](examples/templates/message.ts.hbs)
+##### [{{message}}](templates/examples/message.ts.hbs)
 
 ```handlebars
 {{#message "google.protobuf.Timestamp"}}
@@ -118,7 +118,7 @@ class {{@name}} {}
 {{/service}}
 ```
 
-##### [{{field}}](examples/templates/field.ts.hbs)
+##### [{{field}}](templates/examples/field.ts.hbs)
 
 ```handlebars
 {{#field}}
@@ -141,7 +141,7 @@ const {{@name}}: number? = undefined
 {{/field}}
 ```
 
-##### [{{extension}}](examples/templates/extension.ts.hbs)
+##### [{{extension}}](templates/examples/extension.ts.hbs)
 
 ```handlebars
 {{#extension}}
@@ -164,7 +164,7 @@ const {{@name}}: number? = undefined
 {{/extension}}
 ```
 
-##### [{{enum}}](examples/templates/enum.ts.hbs)
+##### [{{enum}}](templates/examples/enum.ts.hbs)
 
 ```handlebars
 {{#enum}}
@@ -176,7 +176,7 @@ enum {{@name}} {
 {{/enum}}
 ```
 
-##### [{{service}}](examples/templates/service.ts.hbs)
+##### [{{service}}](templates/examples/service.ts.hbs)
 
 ```handlebars
 {{#service}}
@@ -186,7 +186,7 @@ interface {{@name}} {
 {{/service}}
 ```
 
-##### [{{rpc}}](examples/templates/rpc.ts.hbs)
+##### [{{rpc}}](templates/examples/rpc.ts.hbs)
 
 ```handlebars
 {{#rpc}}
@@ -203,7 +203,7 @@ interface {{@name}} {
 {{/rpc}}
 ```
 
-##### [{{option}}](examples/templates/option.ts.hbs)
+##### [{{option}}](templates/examples/option.ts.hbs)
 
 ```handlebars
 {{#message}}
