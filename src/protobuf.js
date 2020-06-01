@@ -9,6 +9,15 @@ const {
 	OneofDescriptorProto,
 	ServiceDescriptorProto,
 	MethodDescriptorProto,
+	FileOptions,
+	MessageOptions,
+	FieldOptions,
+	OneofOptions,
+	EnumOptions,
+	EnumValueOptions,
+	ServiceOptions,
+	MethodOptions,
+	ExtensionRangeOptions,
 } = require('google-protobuf/google/protobuf/descriptor_pb')
 const mem = require('mem')
 
@@ -61,7 +70,7 @@ const mapMessage = (context, options, callback) => {
 		//		}
 		//	}).flat(Infinity).filter(_ => _)
 		case DescriptorProto:
-			return context.getNestedTypeList().map(callback)
+			return [context].map(callback)
 		case FileDescriptorProto:
 			return context.getMessageTypeList().map(callback)
 		default:
@@ -72,8 +81,20 @@ const mapMessage = (context, options, callback) => {
 }
 module.exports.mapMessage = mapMessage
 
+const mapNested = (context, options, callback) => {
+	switch (Object.getPrototypeOf(context).constructor) {
+			case DescriptorProto:
+				return context.getNestedTypeList().map(callback)
+			default:
+				return []
+	}
+}
+module.exports.mapNested = mapNested
+
 const mapEnum = (context, options, callback) => {
 	switch (Object.getPrototypeOf(context).constructor) {
+		case EnumDescriptorProto:
+			return [context].map(callback)
 		case DescriptorProto:
 			return context.getEnumTypeList().map(callback)
 		case FileDescriptorProto:
@@ -88,6 +109,8 @@ module.exports.mapEnum = mapEnum
 
 const mapValue = (context, options, callback) => {
 	switch (Object.getPrototypeOf(context).constructor) {
+		case EnumValueDescriptorProto:
+			return [context].map(callback)
 		case EnumDescriptorProto:
 			return context.getValueList().map(callback)
 		default:
@@ -99,6 +122,8 @@ const mapValue = (context, options, callback) => {
 
 const mapOneOf = (context, options, callback) => {
 	switch (Object.getPrototypeOf(context).constructor) {
+		case OneofDescriptorProto:
+			return [context].map(callback)
 		case DescriptorProto:
 			return context.getOneofDeclList().map(callback)
 		default:
@@ -110,23 +135,31 @@ const mapOneOf = (context, options, callback) => {
 module.exports.mapOneOf = mapOneOf
 
 const mapOption = (context, options, callback) => {
+	if (!context) {
+		return []
+	}
 	switch (Object.getPrototypeOf(context).constructor) {
+		case FileOptions:
+		case MessageOptions:
+		case FieldOptions:
+		case OneofOptions:
+		case EnumOptions:
+		case EnumValueOptions:
+		case ServiceOptions:
+		case MethodOptions:
+		case ExtensionRangeOptions:
+			return [context].map(callback)
 		case FileDescriptorProto:
 		case DescriptorProto:
 		case FieldDescriptorProto:
 		case EnumValueDescriptorProto:
-		case EnumValueDescriptorProto:
 		case OneofDescriptorProto:
 		case ServiceDescriptorProto:
 		case MethodDescriptorProto:
-			const optionsDesc = context.getOptions()
-			if (optionsDesc) {
-				return Object.entries(optionsDesc.toObject()).map(callback)
-			}
-			return []
+			return mapOption(context.getOptions(), options, callback)
 		default:
 			return mapFile(context, options, fileDesc => {
-				return mapOption(fileDesc, options, applyAsParentContext(context, fileDesc, options, callback))
+				return mapOption(fileDesc, options, callback)
 			}).flat(Infinity)
 	}
 }
@@ -254,6 +287,8 @@ module.exports.mapExtension = mapExtension
 
 const mapService = (context, options, callback) => {
 	switch (Object.getPrototypeOf(context).constructor) {
+		case ServiceDescriptorProto:
+			return [context].map(callback)
 		case FileDescriptorProto:
 			return context.getServiceList().map(callback)
 		default:
@@ -266,6 +301,8 @@ module.exports.mapService = mapService
 
 const mapRPC = (context, options, callback) => {
 	switch (Object.getPrototypeOf(context).constructor) {
+		case MethodDescriptorProto:
+			return [context].map(callback)
 		case ServiceDescriptorProto:
 			return context.getMethodList().map(callback)
 		case FileDescriptorProto:
@@ -341,7 +378,7 @@ const applyOptionsIteratorData = (options, callback) => (value, index, array, ke
 				name: value.getName(),
 				recursive: () => {
 					const recursiveOptions = { ...options, _parent: data, data: {} }
-					return mapMessage(
+					return mapNested(
 						value,
 						recursiveOptions,
 						applyOptions(options)
@@ -393,6 +430,18 @@ const applyOptionsIteratorData = (options, callback) => (value, index, array, ke
 				server: value.getServerStreaming() ? 'stream' : 'unary',
 			}
 			data = { ...data, ...data.rpc }
+			break
+		case FileOptions:
+		case MessageOptions:
+		case FieldOptions:
+		case OneofOptions:
+		case EnumOptions:
+		case EnumValueOptions:
+		case ServiceOptions:
+		case MethodOptions:
+		case ExtensionRangeOptions:
+			data.option = value.toObject()
+			data = { ...data, ...data.option }
 			break
 		default:
 			break
