@@ -18,7 +18,10 @@ impl Service for ServiceImpl {
 		Err(Status::unimplemented("Not yet implemented"));
 	}
 
-}
+	async fn sync(&self, _: Request<Streaming<api.SyncRequest>>) -> Result<ResponseStream<api.SyncRequest>, Status> {
+		Err(Status::unimplemented("Not yet implemented"));
+	}
+	}
 
 async fn serve_service(addr: String) -> Result<(), Box<dyn std::error:Error>> {
 	Server::builder()
