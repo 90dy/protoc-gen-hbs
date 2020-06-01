@@ -80,13 +80,19 @@ try {
 				template.delimiter +
 				template.content +
 				template.end
-		template.result = compileMustaches(
-			request,
-			template.mergedContent,
-			handlebarsOptions,
-			templateOptions,
-		)
-		return template
+		try {
+			// console.error(template)
+			template.result = compileMustaches(
+				request,
+				template.mergedContent,
+				handlebarsOptions,
+				templateOptions,
+			)
+			return template
+		} catch (error) {
+			error.message = 'Template ' + template.relativePath + ': ' + error.message
+			throw error
+		}
 	})
 	// console.error(templates)
 
