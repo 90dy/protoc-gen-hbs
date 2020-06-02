@@ -87,7 +87,7 @@ namespace {{@name}} {
 }
 {{/package}}
 
-{{#package "google.*"}}
+{{#package name="google.*"}}
   // {{@name}}
 {{else}}
   // ...
@@ -97,36 +97,54 @@ namespace {{@name}} {
 ##### [{{message}}](templates/examples/message.ts.hbs)
 
 ```handlebars
-{{#message "google.protobuf.Timestamp"}}
+// Display messages name
+{{#message}}
+  {{@name}}
+{{/message}}
+
+// Filter by name
+{{#message name="google.protobuf.Timestamp"}}
 class {{@name}} extends DateTime {}
 {{else}}
 class {{@name}} {}
 {{/message}}
 
-// By default children will get parents name as prefix:
-
+// By default children will get parents name as prefix
 {{#message}}
   {{@name}}
 {{/message}}
 
-// equals
-
+// Is equal to
 {{#service}}
   {{#message}}
   {{@service.name}}.{{@name}}
   {{/message}}
 {{/service}}
+
+// You can access nested message this way
+{{#message}}
+  {{#nested}}
+    {{@name}}
+  {{/nested}}
+{{/message}}
+
+// Or recursively
+{{#message}}
+  {{@name}}
+  {{@recursive}}
+{{/message}}
 ```
 
 ##### [{{field}}](templates/examples/field.ts.hbs)
 
 ```handlebars
-{{#field}}
-const {{@name}}: {{@type}} = null
-{{/field}}
+{{#message}}
+  {{#field}}
+    {{@name}}: {{@type}}
+  {{/field}}
+{{/message}}
 
-// You can filter fields by label or type
-
+// You can filter fields by label and/or type
 {{#field label="repeated"}}
 // TODO: convert type
 const {{@name}}: Array<{{@type}}> = []
@@ -144,24 +162,12 @@ const {{@name}}: number? = undefined
 ##### [{{extension}}](templates/examples/extension.ts.hbs)
 
 ```handlebars
-{{#extension}}
-const {{@name}}: {{@type}} = null
-{{/extension}}
-
-// You can filter extensions by label or type
-
-{{#extension label="repeated"}}
-// TODO: convert type
-const {{@name}}: Array<{{@type}}> = []
-{{/extension}}
-
-{{#extension type="string"}}
-const {{@name}}: string = ''
-{{/extension}}
-
-{{#extension label="optional" type="number"}}
-const {{@name}}: number? = undefined
-{{/extension}}
+// Work exactly like field
+{{#message}}
+  {{#extension}}
+    {{@name}}: {{@type}}
+  {{/extension}}
+{{/message}}
 ```
 
 ##### [{{enum}}](templates/examples/enum.ts.hbs)
@@ -196,7 +202,7 @@ interface {{@name}} {
   }
 {{/rpc}}
 
-// filter by request/response type
+// You can filter by request/response type
 {{#rpc client="unary" server="stream"}}
   // TODO: convert input and output type
   const {{@name}} = (request: {{@input}}, (response: {{@output}} => void): Promise<void>
@@ -206,12 +212,23 @@ interface {{@name}} {
 ##### [{{option}}](templates/examples/option.ts.hbs)
 
 ```handlebars
+// You can filter by option like this
+{{#service}}
+  {{#option deprecated=true}}
+    // Do stuff
+  {{/option}}
+{{/service}}
+
+// Or
+{{#service deprecated=true}}
+  // Do stuff
+{{/service}}
+
+// You can also access it directly
 {{#message}}
-const {{@name}} = {
   {{#field}}
-  {{@name}}: {{#option name="jsonType"}}{{@value}}{{/option}},
+    {{@jsonName}}
   {{/field}}
-}
 {{/message}}
 ```
 
@@ -221,7 +238,6 @@ For helpers not related with protobuf
 
 * All [handlebars-helpers](helpers/handlebars-helpers) have been included
 * Better string case helpers have been added too (see [here](src/case.js))
-
 
 
 ## Contributing
