@@ -14,7 +14,7 @@ This is why this project exists.
 
 ## Philosophy
 
-* Simple to use, simpler to maintain
+* Developer Experience First
 
 ## Installation
 
