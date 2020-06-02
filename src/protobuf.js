@@ -355,7 +355,8 @@ const applyOptionsIteratorData = (options, callback) => (value, index, array, ke
 		key,
 		index,
 		first: index === 0,
-		last: index === array.length - 1
+		last: index === array.length - 1,
+		...(value.getOptions && value.getOptions() ? value.getOptions().toObject() : {}),
 	}
 	switch (Object.getPrototypeOf(value).constructor) {
 		case CodeGeneratorRequest:
@@ -369,7 +370,7 @@ const applyOptionsIteratorData = (options, callback) => (value, index, array, ke
 			break
 		case FileDescriptorProto:
 			data.file = {
-				name: value.getName().replace(/.proto$/, '')
+				name: value.getName().replace(/.proto$/, ''),
 			}
 			data = { ...data, ...data.file }
 			break
@@ -389,7 +390,7 @@ const applyOptionsIteratorData = (options, callback) => (value, index, array, ke
 			break
 		case EnumDescriptorProto:
 			data.enum = {
-				name: value.getName()
+				name: value.getName(),
 			}
 			data = { ...data, ...data.enum }
 			break
