@@ -356,26 +356,26 @@ const applyOptionsIteratorData = (options, callback) => (value, index, array, ke
 		index,
 		first: index === 0,
 		last: index === array.length - 1,
-		...(value.getOptions && value.getOptions() ? value.getOptions().toObject() : {}),
+		...(value.getOptions && (value.getOptions() || {})),
 	}
 	switch (Object.getPrototypeOf(value).constructor) {
 		case CodeGeneratorRequest:
 			if (value !== options.data.root) {
 				// package
-				data.package = {
+				data[options.name] = {
 					name: value.getProtoFileList()[0].getPackage()
 				}
-				data = { ...data, ...data.package }
+				 data = { ...data, ...data[options.name] }
 			}
 			break
 		case FileDescriptorProto:
-			data.file = {
+			data[options.name] = {
 				name: value.getName().replace(/.proto$/, ''),
 			}
-			data = { ...data, ...data.file }
+			 data = { ...data, ...data[options.name] }
 			break
 		case DescriptorProto:
-			data.message = {
+			data[options.name] = {
 				name: value.getName(),
 				recursive: () => {
 					const recursiveOptions = { ...options, _parent: data, data: {} }
@@ -386,51 +386,51 @@ const applyOptionsIteratorData = (options, callback) => (value, index, array, ke
 					).join('\n')
 				},
 			}
-			data = { ...data, ...data.message }
+			 data = { ...data, ...data[options.name] }
 			break
 		case EnumDescriptorProto:
-			data.enum = {
+			data[options.name] = {
 				name: value.getName(),
 			}
-			data = { ...data, ...data.enum }
+			 data = { ...data, ...data[options.name] }
 			break
 		case EnumValueDescriptorProto:
-			data.value = {
+			data[options.name] = {
 				name: value.getName(),
 				number: value.getNumber(),
 			}
-			data = { ...data, ...data.value }
+			 data = { ...data, ...data[options.name] }
 			break
 		case FieldDescriptorProto:
-			data.field = {
+			data[options.name] = {
 				name: value.getName(),
 				type: mapType(value, _ => _),
 				label: mapLabel(value, _ => _),
 				number: value.getNumber(),
 			}
-			data = { ...data, ...data.field }
+			 data = { ...data, ...data[options.name] }
 			break
 		case OneofDescriptorProto:
-			data.oneof = {
+			data[options.name] = {
 				name: value.getName(),
 			}
-			data = { ...data, ...data.oneof }
+			 data = { ...data, ...data[options.name] }
 			break
 		case ServiceDescriptorProto:
-			data.service = {
+			data[options.name] = {
 				name: value.getName(),
 			}
-			data = { ...data, ...data.service }
+			 data = { ...data, ...data[options.name] }
 			break
 		case MethodDescriptorProto:
-			data.rpc = {
+			data[options.name] = {
 				name: value.getName(),
 				input: value.getInputType().replace(/^\./, ''),
 				output: value.getOutputType().replace(/^\./, ''),
 				client: value.getClientStreaming() ? 'stream' : 'unary',
 				server: value.getServerStreaming() ? 'stream' : 'unary',
 			}
-			data = { ...data, ...data.rpc }
+			 data = { ...data, ...data[options.name] }
 			break
 		case FileOptions:
 		case MessageOptions:
@@ -442,7 +442,7 @@ const applyOptionsIteratorData = (options, callback) => (value, index, array, ke
 		case MethodOptions:
 		case ExtensionRangeOptions:
 			data.option = value.toObject()
-			data = { ...data, ...data.option }
+			 data = { ...data, ...data[options.name] }
 			break
 		default:
 			break
