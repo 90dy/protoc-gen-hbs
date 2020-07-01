@@ -1,8 +1,10 @@
 {
 	"name": "protoc-gen-hbs",
-	"version": "2.1.1",
+	"version": "2.1.2",
 	"description": "protoc-gen-hbs",
-	"bin": "bin/protoc-gen-hbs",
+	"bin": {
+		"protoc-gen-hbs": "./src/main.js"
+	},
 	"license": "Apache 2.0",
 	"repository": "https://github.com/gponsinet/protoc-gen-hbs",
 	"scripts": {
