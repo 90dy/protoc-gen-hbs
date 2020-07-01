@@ -2,6 +2,7 @@
 	"name": "protoc-gen-hbs",
 	"version": "2.1.3",
 	"description": "protoc-gen-hbs",
+	"files": "src/*.js",
 	"bin": {
 		"protoc-gen-hbs": "./src/main.js"
 	},

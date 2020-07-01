@@ -1,0 +1,12 @@
+.buf/
+.yarn/
+.mk/
+examples/
+templates/
+buf.yaml
+.yarnrc.yml
+.editorconfig
+Makefile
+.eslintrc.js
+README.md
+.gitmodules
