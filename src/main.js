@@ -104,7 +104,9 @@ try {
 		).filter(_ => _ !== '')
 		list.forEach(content => {
 			const filename = content.split('\n')[0]
-			generatedFiles[filename] = content.replace(new RegExp('^' + filename), '')
+			if (filename != '') {
+				generatedFiles[filename] = content.replace(new RegExp('^' + filename), '')
+			}
 		})
 	})
 	// console.error(generatedFiles)
