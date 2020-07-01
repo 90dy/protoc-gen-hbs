@@ -1,3 +1,6 @@
 [submodule ".mk"]
 	path = .mk
 	url = git@github.com:gponsinet/make-everything
+[submodule ".buf/googleapis"]
+	path = .buf/googleapis
+	url = https://github.com/googleapis/googleapis

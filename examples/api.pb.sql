@@ -21,3 +21,4 @@ CREATE TABLE api_sync_request {
 		CREATE COLUMN payload VARBINARY;
 };
 		
+

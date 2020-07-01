@@ -4,11 +4,7 @@
 -include .mk/yarn.mk
 
 .PHONY: install
-install: .mk install.yarn
-
-.mk:
-	git clone git@github.com:gponsinet/make-everything $@
-	$(MAKE) install
+install: .mk/.git install.yarn
 
 $(yarn.mod)/protoc-gen-hbs: $(yarn.bin)/protoc-gen-hbs
 	[ -e "$(dir $@)" ] || mkdir -p $@
