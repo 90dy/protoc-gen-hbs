@@ -1,6 +1,6 @@
 # protoc-gen-hbs
 
-🏃‍♀️ Fast and easy protobuf generation with handlebars and some helpers
+🏃‍♀️ Easy and Fast Protobuf Generation with Handlebars and some Helpers
 
 ## Why ?
 
