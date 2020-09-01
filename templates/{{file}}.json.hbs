@@ -1,0 +1,10 @@
+{
+  {{#message}}
+    "{{@name}}": {
+      {{#field}}
+        "{{@name}}": "{{@type}}"
+        {{~#unless @last}},{{/unless}}
+      {{/field}}
+    }{{~#unless @last}},{{/unless}}
+  {{/message}}
+}

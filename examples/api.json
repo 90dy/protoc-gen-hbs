@@ -1,0 +1,21 @@
+
+{
+    "AuthRequest": {
+        "name": "string",
+
+        "password": "string"
+    },
+
+    "AuthResponse": {
+        "code": "enum",
+
+        "token": "string"
+    },
+
+    "SyncRequest": {
+        "operation": "enum",
+
+        "payload": "bytes"
+    }
+}
+
