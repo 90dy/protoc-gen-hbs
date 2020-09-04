@@ -1,31 +1,64 @@
-{{#*inline "table"}}
-CREATE TABLE {{snake @package.name}}_{{snake @message.name}} {
+{{#*inline "create_table"}}
+CREATE TABLE {{snake @message.name}} {
 	{{> @partial-block}}
 };
 {{/inline}}
 
+{{#*inline "alter_table"}}
+ALTER TABLE {{snake @message.name}} {
+	{{> @partial-block}}
+};
+{{/inline}}
+
+{{#*inline "delete_table"}}
+DELETE TABLE {{snake @message.name}};
+{{/inline}}
+
 {{~#*inline "type"}}
-	{{~#field type="string"}}VARCHAR{{/field}}
-	{{~#field type="(uint|int|fixed|sfixed)32"}}INTEGER{{/field}}
-	{{~#field type="(uint|int|fixed|sfixed)64"}}BIGINT{{/field}}
-	{{~#field type="message"}}INTEGER{{/field}}
-	{{~#field type="enum"}}INTEGER{{/field}}
-	{{~#field type="bytes"}}VARBINARY{{/field}}
+	{{~#eq @type "string"}}VARCHAR{{/eq}}
+	{{~#eq @type "(uint|int|fixed|sfixed)32"}}INTEGER{{/eq}}
+	{{~#eq @type "(uint|int|fixed|sfixed)64"}}BIGINT{{/eq}}
+	{{~#eq @type "message"}}INTEGER{{/eq}}
+	{{~#eq @type "enum"}}INTEGER{{/eq}}
+	{{~#eq @type "bytes"}}VARBINARY{{/eq}}
 {{~/inline}}
 
-{{#*inline "column"}}
-	{{~#field type="message"}}
-	CREATE COLUMN {{snake @field.name}}_id INTEGER;
-	{{else}}
+{{#*inline "create_column"}}
 	CREATE COLUMN {{snake @field.name}} {{> type}};
-	{{/field}}
+{{/inline}}
+
+{{#*inline "add_column"}}
+	ADD COLUMN {{snake @field.name}};
+{{/inline}}
+
+{{#*inline "drop_column"}}
+	DROP COLUMN {{snake @field.name}};
 {{/inline}}
 
 {{#package}}
+	{{@name}}
 	{{#message}}
-		{{#> table}}
-			{{~> column}}
-		{{/table}}
+		{{@name}}
+		{{#if @created}}
+			{{#> create_table}}
+				{{#field}}
+					{{~> create_column}}
+				{{/field}}
+			{{/create_table}}
+		{{else @deleted}}
+			{{~> delete_table}}
+		{{else}}
+			exist
+			{{#> alter_table}}
+				{{#field}}
+					{{#if @created}}
+						{{~> add_column}}
+					{{else if @deleted}}
+						{{~> drop_column}}
+					{{/if}}
+				{{/field}}
+			{{/alter_table}}
+		{{/if}}
 		{{@message.recursive}}
 	{{/message}}
 {{/package}}

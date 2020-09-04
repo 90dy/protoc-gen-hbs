@@ -1,6 +1,13 @@
 
 
 
-CREATE TABLE example_void {
+
+
+
+
+	example
+		Void
+			exist
+ALTER TABLE void {
 };
-		
+				

@@ -65,7 +65,7 @@ try {
 	templates.list = templates.list.map(template => {
 		template.mustaches = template.decodedRelativePath.match(
 			/{{.*import|file|package|enum|value|message|field|oneof|option|service|rpc|extension.*}}/g
-		)
+		) || []
 		template.mustachesContent = template.mustaches.map(mustache => mustache.replace('{{', '').replace('}}', ''))
 		template.start = template.mustachesContent.map(_ => '{{#' + _ + '}}').join('')
 		template.end = template.mustachesContent.map(_ => '{{/' + _ + '}}').reverse().join('')
@@ -94,7 +94,6 @@ try {
 			throw error
 		}
 	})
-	// console.error(templates)
 
 	// create generated files
 	const generatedFiles = {}
