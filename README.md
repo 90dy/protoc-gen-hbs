@@ -70,6 +70,19 @@ Protobuf helpers was thought as easy to use as possible
 * They can take parameters as arguments to filter by name or specific field
 * Parameters can be globs for strings
 
+##### [{{file}}](templates/examples/file.ts.hbs)
+
+```handlebars
+{{#file}}
+  {{@name}}
+{{/file}}
+
+// You can iterate over all file included (not only file from input)
+{{#file all}}
+  {{@name}}
+{{/file}}
+```
+
 ##### [{{import}}](templates/examples/import.ts.hbs)
 
 ```handlebars
@@ -132,6 +145,12 @@ class {{@name}} {}
 {{#message}}
   {{@name}}
   {{@recursive}}
+{{/message}}
+
+// Or recursively as param
+{{#message recursive}}
+  {{@name}}
+  {{@last}}
 {{/message}}
 ```
 
@@ -230,6 +249,17 @@ interface {{@name}} {
     {{@jsonName}}
   {{/field}}
 {{/message}}
+```
+
+##### Diff
+
+```handlerbars
+// You can compare things too, useful for versioning
+{{#package name="v2" diff="v1"}}
+  {{#message created}}
+    
+  {{/message}}
+{{/package}}
 ```
 
 #### Others

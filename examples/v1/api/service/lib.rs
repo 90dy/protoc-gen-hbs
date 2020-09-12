@@ -18,7 +18,7 @@ impl Service for ServiceImpl {
 		Err(Status::unimplemented("Not yet implemented"));
 	}
 
-	async fn sync(&self, _: Request<Streaming<v1.api.SyncRequest>>) -> Result<ResponseStream<v1.api.SyncRequest>, Status> {
+	async fn sync(&self, _: Request<Streaming<v1.api.SyncRequest>>) -> Result<ResponseStream<v1.api.SyncResponse>, Status> {
 		Err(Status::unimplemented("Not yet implemented"));
 	}
 	}

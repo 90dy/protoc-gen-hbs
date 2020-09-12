@@ -16,6 +16,12 @@
         "operation": "enum",
 
         "payload": "bytes"
+    },
+
+    "SyncResponse": {
+        "operation": "enum",
+
+        "payload": "bytes"
     }
 }
 

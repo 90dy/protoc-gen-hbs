@@ -36,29 +36,32 @@ DELETE TABLE {{snake @message.name}};
 {{/inline}}
 
 {{#package}}
-	{{@name}}
-	{{#message}}
-		{{@name}}
-		{{#if @created}}
-			{{#> create_table}}
-				{{#field}}
-					{{~> create_column}}
-				{{/field}}
-			{{/create_table}}
-		{{else @deleted}}
-			{{~> delete_table}}
-		{{else}}
-			exist
-			{{#> alter_table}}
-				{{#field}}
-					{{#if @created}}
-						{{~> add_column}}
-					{{else if @deleted}}
-						{{~> drop_column}}
-					{{/if}}
-				{{/field}}
-			{{/alter_table}}
-		{{/if}}
-		{{@message.recursive}}
-	{{/message}}
+  {{#with @root}}
+    {{#package name=@package.name diff="v1.*"}}
+      {{@name}}
+    	{{#message}}
+        {{@name}}
+    		{{#if @created}}
+    			{{#> create_table}}
+    				{{#field}}
+    					{{~> create_column}}
+    				{{/field}}
+    			{{/create_table}}
+    		{{else if @deleted}}
+    			{{~> delete_table}}
+    		{{else if @updated}}
+    			{{#> alter_table}}
+    				{{#field}}
+    					{{#if @created}}
+    						{{~> add_column}}
+    					{{else if @deleted}}
+    						{{~> drop_column}}
+    					{{/if}}
+    				{{/field}}
+    			{{/alter_table}}
+    		{{/if}}
+    		{{@message.recursive}}
+    	{{/message}}
+    {{/package}}
+  {{/with}}
 {{/package}}
