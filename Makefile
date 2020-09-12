@@ -1,5 +1,6 @@
 # See https://github.com/gponsinet/make-everything
 
+-include .mk/env.mk
 -include .mk/protoc.mk
 -include .mk/yarn.mk
 

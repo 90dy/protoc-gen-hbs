@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package api;
+package v1.api;
 
 message AuthRequest {
 	string name = 1;

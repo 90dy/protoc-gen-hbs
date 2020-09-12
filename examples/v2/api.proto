@@ -1,0 +1,58 @@
+syntax = "proto3";
+
+package v2.api;
+
+message AuthRequest {
+	string name = 1;
+	string password = 2;
+}
+
+message AuthResponse {
+	enum Code {
+		UNKNOWN = 0;
+		OK = 200;
+		NOT_FOUND = 404;
+		SERVER_ERROR = 500;
+	}
+
+	Code code = 1;
+	string token = 2;
+}
+
+message SyncRequest {
+	enum Operation {
+		UNKNOWN = 0;
+		CREATED = 1;
+		UPDATED = 2;
+		DELETED = 3;
+	}
+	Operation operation = 1;
+	bytes payload = 2;
+}
+
+message QueryRequest {
+  uint64 id = 1;
+  string filter = 2;
+}
+
+message QueryResponse {
+  uint64 id = 1;
+  string data = 2;
+}
+
+message MutationRequest {
+  uint64 id = 1;
+  string payload = 2;
+}
+
+message MutationResponse {
+  uint64 id = 1;
+  string payload = 2;
+}
+
+service Service {
+	rpc Auth(AuthRequest) returns (AuthResponse);
+	rpc Sync(stream SyncRequest) returns (stream SyncRequest);
+  rpc Query(QueryRequest) returns (QueryResponse);
+  rpc Mutation(MutationRequest) returns (MutationResponse);
+}

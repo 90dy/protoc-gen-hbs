@@ -37,7 +37,7 @@ npm install --global protoc-gen-hbs
 ### CLI
 
 ```
-protoc --hbs_out="[<template_dir>:]<out_dir>" [-I<proto_paths>...] <proto_files>...
+protoc --hbs_out="[<template_dir>:]<out_dir>" [-I<proto_paths>...] <proto_files>..
 
 Options:
   out_dir         Path where to generate output files

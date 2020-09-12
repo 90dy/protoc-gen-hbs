@@ -19,126 +19,127 @@ const {
 	MethodOptions,
 	ExtensionRangeOptions,
 } = require('google-protobuf/google/protobuf/descriptor_pb')
-const mem = require('mem')
 
-const mapFile = (context, options, callback) => {
-	switch (Object.getPrototypeOf(context).constructor) {
+const returnValue = _ => _
+
+const mapFile = (context, callback) => {
+	switch (Object.getPrototypeOf(context.descriptor).constructor) {
 		case CodeGeneratorRequest:
-			return context.getProtoFileList().filter(
-				fileDesc => context.getFileToGenerateList().find(
+			return context.descriptor.getProtoFileList().filter(
+				fileDesc => context.descriptor.getFileToGenerateList().find(
 					fileName => fileDesc.getName() === fileName
 				)
-			).map(callback)
+			).map(applyDescriptor(context, callback))
 		case FileDescriptorProto:
-			return [context].map(callback)
+			return [context.descriptor].map(applyDescriptor(context, callback))
 		default:
 			return []
 	}
 }
 module.exports.mapFile = mapFile
 
-const mapDependency = (context, options, callback) => {
-	return mapFile(context, options, fileDesc => {
-		return fileDesc.getDependencyList().map(callback)
+const mapImport = (context, callback) => {
+	return mapFile(context, file => {
+		return file.descriptor.getDependencyList().map(applyDescriptor(context, callback))
 	}).flat(Infinity)
 }
-module.exports.mapDependency = mapDependency
+module.exports.mapImport = mapImport
 
-const mapPackage = (context, options, callback) => {
+const mapPackage = (context, callback) => {
 	const packageList = {}
-	return mapFile(context, options, fileDesc => {
+	return mapFile(context, ({ descriptor: fileDesc }) => {
 		const package = fileDesc.getPackage()
 		if (!packageList[package]) {
-			packageList[package] = options.data.root.clone()
+			packageList[package] = context.options.data.root.clone()
 			packageList[package].setProtoFileList([fileDesc])
 			packageList[package].setFileToGenerateList([fileDesc.getName()])
 			return packageList[package]
 		}
 		packageList[package].addFileToGenerate(fileDesc.getName())
 		packageList[package].addProtoFile(fileDesc)
-	}).filter(_ => _).map(callback)
+	}).filter(_ => _).map(applyDescriptor(context, callback))
 }
 module.exports.mapPackage = mapPackage
 
-const mapMessage = (context, options, callback) => {
-	switch (Object.getPrototypeOf(context).constructor) {
+const mapMessage = (context, callback) => {
+	switch (Object.getPrototypeOf(context.descriptor).constructor) {
 		// TODO: get message from field type
 		// case FieldDescriptorProto:
-		//	return mapType(context, options, type => {
+		//	return mapType(context, type => {
 		//		if (type === 'message') {
 		//			return [].map(callback)
 		//		}
 		//	}).flat(Infinity).filter(_ => _)
 		case DescriptorProto:
-			return [context].map(callback)
+			return [context.descriptor].map(applyDescriptor(context, callback))
 		case FileDescriptorProto:
-			return context.getMessageTypeList().map(callback)
+			return context.descriptor.getMessageTypeList().map(applyDescriptor(context, callback))
 		default:
-			return mapFile(context, options, fileDesc => {
-				return mapMessage(fileDesc, options, applyAsParentContext(context, fileDesc, options, callback))
+			return mapFile(context, file => {
+				return mapMessage(file, applyScope(context, file.descriptor, callback))
 			}).flat(Infinity)
 	}
 }
 module.exports.mapMessage = mapMessage
 
-const mapNested = (context, options, callback) => {
-	switch (Object.getPrototypeOf(context).constructor) {
-			case DescriptorProto:
-				return context.getNestedTypeList().map(callback)
-			default:
-				return []
+const mapNested = (context, callback) => {
+	switch (Object.getPrototypeOf(context.descriptor).constructor) {
+		case DescriptorProto:
+			return context.descriptor.getNestedTypeList().map(applyDescriptor(context, callback))
+		default:
+			return []
 	}
 }
 module.exports.mapNested = mapNested
 
-const mapEnum = (context, options, callback) => {
-	switch (Object.getPrototypeOf(context).constructor) {
+const mapEnum = (context, callback) => {
+	switch (Object.getPrototypeOf(context.descriptor).constructor) {
 		case EnumDescriptorProto:
-			return [context].map(callback)
+			return [context.descriptor].map(applyDescriptor(context, callback))
 		case DescriptorProto:
-			return context.getEnumTypeList().map(callback)
+			return context.descriptor.getEnumTypeList().map(applyDescriptor(context, callback))
 		case FileDescriptorProto:
-			return context.getEnumTypeList().map(callback)
+			return context.descriptor.getEnumTypeList().map(applyDescriptor(context, callback))
 		default:
-			return mapFile(context, options, fileDesc => {
-				return mapEnum(fileDesc, options, applyAsParentContext(context, fileDesc, options, callback))
+			return mapFile(context, file => {
+				return mapEnum(file, applyScope(context, file.descriptor, callback))
 			}).flat(Infinity)
 	}
 }
 module.exports.mapEnum = mapEnum
 
-const mapValue = (context, options, callback) => {
-	switch (Object.getPrototypeOf(context).constructor) {
+const mapValue = (context, callback) => {
+	switch (Object.getPrototypeOf(context.descriptor).constructor) {
 		case EnumValueDescriptorProto:
-			return [context].map(callback)
+			return [context.descriptor].map(applyDescriptor(context, callback))
 		case EnumDescriptorProto:
-			return context.getValueList().map(callback)
+			return context.descriptor.getValueList().map(callback)
 		default:
-			return mapFile(context, options, fileDesc => {
-				return mapValue(fileDesc, options, applyAsParentContext(context, fileDesc, options, callback))
+			return mapFile(context, file => {
+				return mapValue(file, applyScope(context, file.descriptor, callback))
 			}).flat(Infinity)
 	}
 }
 
-const mapOneOf = (context, options, callback) => {
-	switch (Object.getPrototypeOf(context).constructor) {
+const mapOneOf = (context, callback) => {
+	switch (Object.getPrototypeOf(context.descriptor).constructor) {
 		case OneofDescriptorProto:
-			return [context].map(callback)
+			return [context.descriptor].map(applyDescriptor(context, callback))
 		case DescriptorProto:
-			return context.getOneofDeclList().map(callback)
+			return context.descriptor.getOneofDeclList().map(applyDescriptor(context, callback))
 		default:
-			return mapFile(context, options, fileDesc => {
-				return mapOneOf(fileDesc, options, applyAsParentContext(context, fileDesc, options, callback))
+			return mapFile(context, file => {
+				return mapOneOf(file, applyScope(context, file.descriptor, callback))
 			})
 	}
 }
 module.exports.mapOneOf = mapOneOf
 
-const mapOption = (context, options, callback) => {
-	if (!context) {
+const mapOption = (context, callback) => {
+	if (!context.descriptor) {
 		return []
 	}
-	switch (Object.getPrototypeOf(context).constructor) {
+	switch (Object.getPrototypeOf(context.descriptor).constructor) {
 		case FileOptions:
 		case MessageOptions:
 		case FieldOptions:
@@ -148,7 +149,7 @@ const mapOption = (context, options, callback) => {
 		case ServiceOptions:
 		case MethodOptions:
 		case ExtensionRangeOptions:
-			return [context].map(callback)
+			return [context.descriptor].map(applyDescriptor(context, callback))
 		case FileDescriptorProto:
 		case DescriptorProto:
 		case FieldDescriptorProto:
@@ -156,19 +157,19 @@ const mapOption = (context, options, callback) => {
 		case OneofDescriptorProto:
 		case ServiceDescriptorProto:
 		case MethodDescriptorProto:
-			return mapOption(context.getOptions(), options, callback)
+			return mapOption({...context, descriptor: context.descriptor.getOptions()}, callback)
 		default:
-			return mapFile(context, options, fileDesc => {
-				return mapOption(fileDesc, options, callback)
+			return mapFile(context, file => {
+				return mapOption(file, callback)
 			}).flat(Infinity)
 	}
 }
 module.exports.mapOption = mapOption
 
-const mapLabel = (context, options, callback) => {
-	switch (Object.getPrototypeOf(context).constructor) {
+const mapLabel = (context, callback) => {
+	switch (Object.getPrototypeOf(context.descriptor).constructor) {
 		case FieldDescriptorProto:
-			switch (context.getLabel()) {
+			switch (context.descriptor.getLabel()) {
 				case FieldDescriptorProto.Label.LABEL_OPTIONAL:
 					return 'optional'
 				case FieldDescriptorProto.Label.LABEL_REQUIRED:
@@ -179,23 +180,23 @@ const mapLabel = (context, options, callback) => {
 					return ''
 			}
 		case DescriptorProto:
-			return mapField(context, options, fieldDesc => {
-				return mapLabel(fieldDesc, options, applyAsParentContext(context, null, options, callback))
+			return mapField(context, field => {
+				return mapLabel(field, applyScope(context, null, callback))
 			}).flat(Infinity)
 		default:
-			return mapFile(context, options, fileDesc => {
-				return mapMessage(context, options, messageDesc => {
-					return mapLabel(messageDesc, options, applyAsParentContext(context, fileDesc, options, callback))
+			return mapFile(context, file => {
+				return mapMessage(context, message => {
+					return mapLabel(message, applyScope(context, file.descriptor, callback))
 				}).flat(Infinity)
 			}).flat(Infinity)
 	}
 }
 module.exports.mapLabel = mapLabel
 
-const mapType = (context, options, callback) => {
-	switch (Object.getPrototypeOf(context).constructor) {
+const mapType = (context, callback) => {
+	switch (Object.getPrototypeOf(context.descriptor).constructor) {
 		case FieldDescriptorProto:
-			switch (context.getType()) {
+			switch (context.descriptor.getType()) {
 				case FieldDescriptorProto.Type.TYPE_DOUBLE:
 					return 'double'
 				case FieldDescriptorProto.Type.TYPE_FLOAT:
@@ -236,201 +237,225 @@ const mapType = (context, options, callback) => {
 					return ''
 			}
 		case DescriptorProto:
-			return mapField(context, options, fieldDesc => {
-				return mapType(fieldDesc, options, applyAsParentContext(context, null, options, callback))
+			return mapField(context, field => {
+				return mapType(field, applyScope(context, null, callback))
 			}).flat(Infinity)
 		default:
-			return mapFile(context, options, fileDesc => {
-				return mapMessage(context, options, messageDesc => {
-					return mapType(messageDesc, options, applyAsParentContext(context, fileDesc, options, callback))
+			return mapFile(context, file => {
+				return mapMessage(context, message => {
+					return mapType(message, applyScope(context, file.descriptor, callback))
 				})
 			}).flat(Infinity)
 	}
 }
 module.exports.mapType = mapType
 
-const mapField = (context, options, callback) => {
-	switch (Object.getPrototypeOf(context).constructor) {
+const mapField = (context, callback) => {
+	switch (Object.getPrototypeOf(context.descriptor).constructor) {
 		case FieldDescriptorProto:
-			return [context].map(callback)
+			return [context.descriptor].map(applyDescriptor(context, callback))
 		case DescriptorProto:
-			return context.getFieldList().map(callback)
+			return context.descriptor.getFieldList().map(applyDescriptor(context, callback))
 		case FileDescriptorProto:
-			return context.getMessageTypeList().map(message => {
-				return mapField(message, options, applyAsParentContext(message, context, options, callback))
+			return mapMessage(message => {
+				return mapField(message, applyScope(message, context.descriptor, callback))
 			}).flat(Infinity)
 		default:
-			return mapFile(context, options, fileDesc => {
-				return mapField(fileDesc, options, applyAsParentContext(context, fileDesc, options, callback))
+			return mapFile(context, file => {
+				return mapField(file, applyScope(context, file.descriptor, callback))
 			}).flat(Infinity)
 	}
 }
 module.exports.mapField = mapField
 
-const mapExtension = (context, options, callback) => {
-	switch (Object.getPrototypeOf(context).constructor) {
+const mapExtension = (context, callback) => {
+	switch (Object.getPrototypeOf(context.descriptor).constructor) {
 		case FieldDescriptorProto:
-			return [context].map(callback)
+			return [context.descriptor].map(applyDescriptor(context, callback))
 		case DescriptorProto:
-			return context.getExtensionList().map(callback)
+			return context.descriptor.getExtensionList().map(applyDescriptor(context, callback))
 		case FileDescriptorProto:
-			return context.getMessageTypeList().map(message => {
-				return mapExtension(message, options, applyAsParentContext(message, context, options, callback))
+			return mapMessage(message => {
+				return mapExtension(message, applyScope(message, context.descriptor, callback))
 			}).flat(Infinity)
 		default:
-			return mapFile(context, options, fileDesc => {
-				return mapExtension(fileDesc, options, applyAsParentContext(context, fileDesc, options, callback))
+			return mapFile(context, file => {
+				return mapExtension(file, applyScope(context, file.descriptor, callback))
 			}).flat(Infinity)
 	}
 }
 module.exports.mapExtension = mapExtension
 
-const mapService = (context, options, callback) => {
-	switch (Object.getPrototypeOf(context).constructor) {
+const mapService = (context, callback) => {
+	switch (Object.getPrototypeOf(context.descriptor).constructor) {
 		case ServiceDescriptorProto:
-			return [context].map(callback)
+			return [context.descriptor].map(applyDescriptor(context, callback))
 		case FileDescriptorProto:
-			return context.getServiceList().map(callback)
+			return context.descriptor.getServiceList().map(applyDescriptor(context, callback))
 		default:
-			return mapFile(context, options, fileDesc => {
-				return mapService(fileDesc, options, applyAsParentContext(context, fileDesc, options, callback))
+			return mapFile(context, file => {
+				return mapService(file, applyScope(context, file.descriptor, callback))
 			}).flat(Infinity)
 	}
 }
 module.exports.mapService = mapService
 
-const mapRPC = (context, options, callback) => {
-	switch (Object.getPrototypeOf(context).constructor) {
+const mapRPC = (context, callback) => {
+	switch (Object.getPrototypeOf(context.descriptor).constructor) {
 		case MethodDescriptorProto:
-			return [context].map(callback)
+			return [context.descriptor].map(applyDescriptor(context, callback))
 		case ServiceDescriptorProto:
-			return context.getMethodList().map(callback)
+			return context.descriptor.getMethodList().map(applyDescriptor(context, callback))
 		case FileDescriptorProto:
-			return context.getServiceList().map(service => {
-				return mapRPC(service, options, applyAsParentContext(service, context, options, callback))
+			return mapService(service => {
+				return mapRPC(service, applyScope(service, context.descriptor, callback))
 			}).flat(Infinity)
 		default:
-			return mapFile(context, options, fileDesc => {
-				return mapRPC(fileDesc, options, callback)
+			return mapFile(context, file => {
+				return mapRPC(file, callback)
 			}).flat(Infinity)
 	}
 }
 module.exports.mapRPC = mapRPC
 
-const applyAsParentContext = (context, fileDesc, options, callback) => (value, index, array, key) => {
-	switch (Object.getPrototypeOf(context).constructor) {
+const applyScope = ({descriptor, options}, fileDesc, callback) => (item, index, array) => {
+	switch (Object.getPrototypeOf(descriptor).constructor) {
 		case CodeGeneratorRequest:
-			if (context !== options.data.root) {
-				// context === package
-				return callback(value, index, array, key)
+			if (descriptor !== options.data.root) {
+				// descriptor === package
+				return callback(item, index, array)
 			} else {
-				// context === root
-				return applyAsParentContext(
+				// descriptor === root
+				return applyScope(
+					{
+						descriptor: fileDesc,
+						options,
+					},
 					fileDesc,
-					fileDesc,
-					options,
-					callback
-				)(value, index, array, key)
+					callback,
+				)(item, index, array)
 			}
-		default:
-			const prefix = context.getPackage
-				? context.getPackage()
-				: context.getName()
-			if (typeof value === 'object') {
-				const clone = value.clone()
-				clone.setName(prefix + '.' + value.getName())
-				return callback(clone, index, array, key)
-			}
-			if (typeof value === 'string') {
-				return callback(prefix + '.' + value, index, array, key)
-			}
-			return callback(value, index, array, key)
+		default: {
+			const prefix = descriptor.getPackage
+				? descriptor.getPackage()
+				: descriptor.getName()
+			const name = prefix + '.' + item.options.data.name
+			return callback({
+				...item,
+				options: {
+					...item.options,
+					data: {
+						...item.options.data,
+						name,
+						[item.options.name]: {
+							...item.options.data[item.options.name],
+							name,
+						},
+					},
+				},
+			}, index, array)
+		}
 	}
 }
-module.exports.applyAsParentContext = applyAsParentContext
+module.exports.applyScope = applyScope
 
-const applyOptionsIteratorData = (options, callback) => (value, index, array, key) => {
-	let data = {
-		...options.data,
-		key,
-		index,
-		first: index === 0,
-		last: index === array.length - 1,
-		...(value.getOptions && (value.getOptions() || {})),
+const applyIterator = (callback) => (item, index, array) => {
+	return callback({
+		...item,
+		options: {
+			...item.options,
+			data: {
+				...item.options.data,
+				index: index === 0,
+				first: index === 0,
+				last: index === array.length - 1,
+			}
+		}
+	}, index, array)
+}
+module.exports.applyIterator = applyIterator
+
+const applyDescriptor = (context, callback) => (itemDesc, index, array) => {
+	const { options } = context
+	const item = {
+		descriptor: itemDesc,
+		options: {
+			...context.options,
+		},
 	}
-	switch (Object.getPrototypeOf(value).constructor) {
+	let data = {}
+	switch (Object.getPrototypeOf(item.descriptor).constructor) {
 		case CodeGeneratorRequest:
-			if (value !== options.data.root) {
+			if (item.descriptor !== options.data.root) {
 				// package
 				data[options.name] = {
-					name: value.getProtoFileList()[0].getPackage()
+					name: item.descriptor.getProtoFileList()[0].getPackage()
 				}
-				 data = { ...data, ...data[options.name] }
+				data = { ...data, ...data[options.name] }
 			}
 			break
 		case FileDescriptorProto:
 			data[options.name] = {
-				name: value.getName().replace(/.proto$/, ''),
+				name: item.descriptor.getName().replace(/.proto$/, ''),
 			}
-			 data = { ...data, ...data[options.name] }
+			data = { ...data, ...data[options.name] }
 			break
 		case DescriptorProto:
 			data[options.name] = {
-				name: value.getName(),
+				name: item.descriptor.getName(),
 				recursive: () => {
 					const recursiveOptions = { ...options, _parent: data, data: {} }
 					return mapNested(
-						value,
-						recursiveOptions,
-						applyOptions(options)
+						{descriptor: item.descriptor, options: recursiveOptions},
+						applyOptions({ descriptor: item.descriptor, options })
 					).join('\n')
 				},
 			}
-			 data = { ...data, ...data[options.name] }
+			data = { ...data, ...data[options.name] }
 			break
 		case EnumDescriptorProto:
 			data[options.name] = {
-				name: value.getName(),
+				name: item.descriptor.getName(),
 			}
-			 data = { ...data, ...data[options.name] }
+			data = { ...data, ...data[options.name] }
 			break
 		case EnumValueDescriptorProto:
 			data[options.name] = {
-				name: value.getName(),
-				number: value.getNumber(),
+				name: item.descriptor.getName(),
+				number: item.descriptor.getNumber(),
 			}
-			 data = { ...data, ...data[options.name] }
+			data = { ...data, ...data[options.name] }
 			break
 		case FieldDescriptorProto:
 			data[options.name] = {
-				name: value.getName(),
-				type: mapType(value, _ => _),
-				label: mapLabel(value, _ => _),
-				number: value.getNumber(),
+				name: item.descriptor.getName(),
+				type: mapType(item, returnValue),
+				label: mapLabel(item, returnValue),
+				number: item.descriptor.getNumber(),
 			}
-			 data = { ...data, ...data[options.name] }
+			data = { ...data, ...data[options.name] }
 			break
 		case OneofDescriptorProto:
 			data[options.name] = {
-				name: value.getName(),
+				name: item.descriptor.getName(),
 			}
-			 data = { ...data, ...data[options.name] }
+			data = { ...data, ...data[options.name] }
 			break
 		case ServiceDescriptorProto:
 			data[options.name] = {
-				name: value.getName(),
+				name: item.descriptor.getName(),
 			}
-			 data = { ...data, ...data[options.name] }
+			data = { ...data, ...data[options.name] }
 			break
 		case MethodDescriptorProto:
 			data[options.name] = {
-				name: value.getName(),
-				input: value.getInputType().replace(/^\./, ''),
-				output: value.getOutputType().replace(/^\./, ''),
-				client: value.getClientStreaming() ? 'stream' : 'unary',
-				server: value.getServerStreaming() ? 'stream' : 'unary',
+				name: item.descriptor.getName(),
+				input: item.descriptor.getInputType().replace(/^\./, ''),
+				output: item.descriptor.getOutputType().replace(/^\./, ''),
+				client: item.descriptor.getClientStreaming() ? 'stream' : 'unary',
+				server: item.descriptor.getServerStreaming() ? 'stream' : 'unary',
 			}
-			 data = { ...data, ...data[options.name] }
+			data = { ...data, ...data[options.name] }
 			break
 		case FileOptions:
 		case MessageOptions:
@@ -441,76 +466,135 @@ const applyOptionsIteratorData = (options, callback) => (value, index, array, ke
 		case ServiceOptions:
 		case MethodOptions:
 		case ExtensionRangeOptions:
-			data.option = value.toObject()
-			 data = { ...data, ...data[options.name] }
+			data.option = item.descriptor.toObject()
+			data = { ...data, ...data[options.name] }
 			break
 		default:
 			break
 	}
-	return callback(value, { data })
+	return callback({
+		...item,
+		options: {
+			...item.options,
+			data: {
+				...item.options.data,
+				...data,
+				...(item.descriptor.getOptions && (item.descriptor.getOptions() || {})),
+			}
+		}
+	}, index, array)
 }
-module.exports.applyOptionsIteratorData = applyOptionsIteratorData
+module.exports.applyDescriptor = applyDescriptor
 
-const matchOptionsHash = (options, trueMatch, falseMatch) => (value, { data }) => {
+
+const matchOptionsHash = ({options}, trueMatch, falseMatch) => (item, index, array) => {
 	if (Object.entries(options.hash).every(([key, value]) => {
+		switch (key) {
+			case 'diff':
+				return true
+			default:
+				break
+		}
 		switch (typeof value) {
 			case 'string':
-				return minimatch(data[key], value)
+				return minimatch(item.options.data[key], value)
 			default:
-				return data[key] === value
+				return item.options.data[key] === value
 		}
 	})) {
-		return trueMatch(value, { data })
+		return trueMatch(item, index, array)
 	} else if (falseMatch) {
-		return falseMatch(value, { data })
-	} else {
-		return ''
+		return falseMatch(item, index, array)
 	}
 }
 module.exports.matchOptionsHash = matchOptionsHash
 
-const applyOptions = (options) => {
+const applyOptions = (context) => {
+	const {options} = context
 	return options.fn
-		? applyOptionsIteratorData(options, matchOptionsHash(options, options.fn, options.inverse))
-		: applyOptionsIteratorData(options, matchOptionsHash(options, (_, { data }) => data.name))
+		? applyIterator(matchOptionsHash(
+			context,
+			(context) => options.fn(context.descriptor, context.options),
+			(context) => options.inverse(context.descriptor, context.options),
+		))
+		: applyIterator(matchOptionsHash(
+			context,
+			({ options }) => options.data.name
+		))
+}
+
+const mapDescriptor = (context, callback) => {
+	const {options} = context
+	switch (options.name) {
+		case 'package':
+			return mapPackage(context, callback)
+		case 'file':
+			return mapFile(context, callback)
+		case 'import':
+			return mapImport(context, callback)
+		case 'enum':
+			return mapEnum(context, callback)
+		case 'value':
+			return mapValue(context, callback)
+		case 'message':
+			return mapMessage(context, callback)
+		case 'nested':
+			return mapNested(context, callback)
+		case 'field':
+			return mapField(context, callback)
+		case 'oneof':
+			return mapOneOf(context, callback)
+		case 'option':
+			return mapOption(context, callback)
+		case 'service':
+			return mapService(context, callback)
+		case 'rpc':
+			return mapRPC(context, callback)
+		case 'extension':
+			return mapExtension(context, callback)
+		default:
+			return []
+	}
 }
 
 module.exports.register = handlebars => {
 	handlebars.registerHelper('import', function (options) {
-		return mapDependency(this, options, applyOptions(options)).join('\n')
+		return mapDescriptor({descriptor: this, options}, applyOptions({descriptor: this, options})).join('\n')
 	})
 	handlebars.registerHelper('file', function (options) {
-		return mapFile(this, options, applyOptions(options)).join('\n')
+		return mapDescriptor({descriptor: this, options}, applyOptions({descriptor: this, options})).join('\n')
 	})
 	handlebars.registerHelper('package', function (options) {
-		return mapPackage(this, options, applyOptions(options)).join('\n')
+		return mapDescriptor({descriptor: this, options}, applyOptions({descriptor: this, options})).join('\n')
 	})
 	handlebars.registerHelper('enum', function (options) {
-		return mapEnum(this, options, applyOptions(options)).join('\n')
+		return mapDescriptor({descriptor: this, options}, applyOptions({descriptor: this, options})).join('\n')
 	})
 	handlebars.registerHelper('value', function (options) {
-		return mapValue(this, options, applyOptions(options)).join('\n')
+		return mapDescriptor({descriptor: this, options}, applyOptions({descriptor: this, options})).join('\n')
 	})
 	handlebars.registerHelper('message', function (options) {
-		return mapMessage(this, options, applyOptions(options)).join('\n')
+		return mapDescriptor({descriptor: this, options}, applyOptions({descriptor: this, options})).join('\n')
+	})
+	handlebars.registerHelper('nested', function (options) {
+		return mapDescriptor({descriptor: this, options}, applyOptions({descriptor: this, options})).join('\n')
 	})
 	handlebars.registerHelper('field', function (options) {
-		return mapField(this, options, applyOptions(options)).join('\n')
+		return mapDescriptor({descriptor: this, options}, applyOptions({descriptor: this, options})).join('\n')
 	})
 	handlebars.registerHelper('oneof', function (options) {
-		return mapOneOf(this, options, applyOptions(options)).join('\n')
+		return mapDescriptor({descriptor: this, options}, applyOptions({descriptor: this, options})).join('\n')
 	})
 	handlebars.registerHelper('option', function (options) {
-		return mapOption(this, options, applyOptions(options)).join('\n')
+		return mapDescriptor({descriptor: this, options}, applyOptions({descriptor: this, options})).join('\n')
 	})
 	handlebars.registerHelper('service', function (options) {
-		return mapService(this, options, applyOptions(options)).join('\n')
+		return mapDescriptor({descriptor: this, options}, applyOptions({descriptor: this, options})).join('\n')
 	})
 	handlebars.registerHelper('rpc', function (options) {
-		return mapRPC(this, options, applyOptions(options)).join('\n')
+		return mapDescriptor({descriptor: this, options}, applyOptions({descriptor: this, options})).join('\n')
 	})
 	handlebars.registerHelper('extension', function (options) {
-		return mapExtension(this, options, applyOptions(options)).join('\n')
+		return mapDescriptor({descriptor: this, options}, applyOptions({descriptor: this, options})).join('\n')
 	})
 }
-
