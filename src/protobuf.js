@@ -25,6 +25,9 @@ const returnValue = _ => _
 const mapFile = (context, callback) => {
 	switch (Object.getPrototypeOf(context.descriptor).constructor) {
 		case CodeGeneratorRequest:
+			if (context.options.hash === 'all') {
+				return context.descriptor.getProtoFileList().map(applyDescriptor(context, callback))
+			}
 			return context.descriptor.getProtoFileList().filter(
 				fileDesc => context.descriptor.getFileToGenerateList().find(
 					fileName => fileDesc.getName() === fileName
@@ -71,8 +74,23 @@ const mapMessage = (context, callback) => {
 		//		}
 		//	}).flat(Infinity).filter(_ => _)
 		case DescriptorProto:
+			if (context.options.hash.nested) {
+				return context.descriptor.getNestedTypeList().map(applyDescriptor(context, callback))
+			}
+			if (context.options.hash.recursive) {
+				return context.descriptor.getNestedTypeList().map(applyDescriptor(context, message => [
+					message,
+					mapMessage(message, applyScope(message, null, returnValue))
+				])).flat(Infinity).map(callback)
+			}
 			return [context.descriptor].map(applyDescriptor(context, callback))
 		case FileDescriptorProto:
+			if (context.options.hash.nested || context.options.hash.recursive) {
+				return context.descriptor.getMessageTypeList().map(applyDescriptor(context, message => [
+					message,
+					mapMessage(message, applyScope(message, null, returnValue))
+				])).flat(Infinity).map(callback)
+			}
 			return context.descriptor.getMessageTypeList().map(applyDescriptor(context, callback))
 		default:
 			return mapFile(context, file => {
@@ -336,10 +354,10 @@ const applyScope = ({descriptor, options}, fileDesc, callback) => (item, index, 
 				)(item, index, array)
 			}
 		default: {
-			const prefix = descriptor.getPackage
+			const scope = descriptor.getPackage
 				? descriptor.getPackage()
 				: descriptor.getName()
-			const name = prefix + '.' + item.options.data.name
+			const name = scope + '.' + item.options.data.name
 			return callback({
 				...item,
 				options: {
@@ -479,7 +497,6 @@ const applyDescriptor = (context, callback) => (itemDesc, index, array) => {
 			data: {
 				...item.options.data,
 				...data,
-				...(item.descriptor.getOptions && (item.descriptor.getOptions() || {})),
 			}
 		}
 	}, index, array)
@@ -487,13 +504,21 @@ const applyDescriptor = (context, callback) => (itemDesc, index, array) => {
 module.exports.applyDescriptor = applyDescriptor
 
 
-const matchOptionsHash = ({options}, trueMatch, falseMatch) => (item, index, array) => {
+const matchHash = ({options}, trueMatch, falseMatch) => (item, index, array) => {
 	if (Object.entries(options.hash).every(([key, value]) => {
-		switch (key) {
-			case 'diff':
-				return true
-			default:
-				break
+		if (options.hash.diff) {
+			switch (key) {
+				case 'all':
+					return true
+        case 'nested':
+          return true
+				case 'recursive':
+					return true
+				case 'diff':
+					return !minimatch(item.options.data.name, value)
+				default:
+					break
+			}
 		}
 		switch (typeof value) {
 			case 'string':
@@ -507,17 +532,35 @@ const matchOptionsHash = ({options}, trueMatch, falseMatch) => (item, index, arr
 		return falseMatch(item, index, array)
 	}
 }
-module.exports.matchOptionsHash = matchOptionsHash
+module.exports.matchHash = matchHash
+
+const getOptionsDataScopeAndName = (descName) => {
+	return (descName.match(/(.*)\.(.*)/) || ['', '', descName]).
+		slice(1, 3).
+		reduce((a, v, i) => ({
+			...a,
+			[i === 0 ? 'scope' : 'name']: v
+		}), {})
+}
+
+
+const isSame = (a) => (b) => {
+	return a.descriptor === b.descriptor
+}
+
+const isNotSame = (a) => (b) => {
+	return a.descriptor !== b.descriptor
+}
 
 const applyOptions = (context) => {
 	const {options} = context
 	return options.fn
-		? applyIterator(matchOptionsHash(
+		? applyIterator(matchHash(
 			context,
 			(context) => options.fn(context.descriptor, context.options),
 			(context) => options.inverse(context.descriptor, context.options),
 		))
-		: applyIterator(matchOptionsHash(
+		: applyIterator(matchHash(
 			context,
 			({ options }) => options.data.name
 		))
@@ -557,44 +600,209 @@ const mapDescriptor = (context, callback) => {
 	}
 }
 
+const applyAsOld = (callback) => (item, index, array) => {
+	return callback({
+		...item,
+		options: {
+			...item.options,
+			data: {
+				...item.options.data,
+				old: true,
+				new: false,
+			},
+		}
+	}, index, array)
+}
+
+const applyAsNew = (callback) => (item, index, array) => {
+	return callback({
+		...item,
+		options: {
+			...item.options,
+			data: {
+				...item.options.data,
+				new: true,
+				old: false,
+			},
+		},
+	}, index, array)
+}
+
+const isDiff = (a, diffHash) => (b) => {
+  if (diffHash) {
+    return true
+  }
+	if (a.options.data.old !== b.options.data.new) {
+		return false
+	}
+	return Object.keys(a.options.data).every((key) => {
+		switch (key) {
+			case 'number':
+				return a.options.data.number === b.options.data.number
+			case 'name':
+				return a.options.data.name === b.options.data.name
+			default:
+				return true
+		}
+	})
+}
+
+const applyDiff = (context, oldItems, newItems, diffHash, callback) => {
+  console.error(oldItems.map(_ => _.options.data.name))
+	return (item, index, array) => {
+    let diffItems = item.options.data.new
+			? oldItems.filter(isDiff(item, diffHash))
+      : newItems.filter(isDiff(item, diffHash))
+		return callback({
+			...item,
+			options: {
+				...item.options,
+				data: {
+					...item.options.data,
+					diffItems,
+					created: item.options.data.new ? diffItems.length === 0 : false,
+					deleted: item.options.data.old ? diffItems.length === 0 : false,
+				}
+			}
+		}, index, array)
+	}
+}
+
+// const mapDiff = (context, callback) => {
+//   const rootCtx = {
+//     descriptor: context.options.data.root,
+// 		options: {
+//       ...context.options,
+// 			hash: {
+// 				...context.options.hash,
+// 				name: context.options.hash.diff,
+// 				all: true,
+// 				recursive: true,
+// 			}
+// 		},
+//   }
+//   delete rootCtx.options.hash.diff
+//   console.error(rootCtx)
+// 	return mapDescriptor(rootCtx, matchHash(rootCtx, callback))
+// }
+
+const mapDescriptorWithDiff = (context, callback) => {
+  const {diffItems} = context.options.data
+  const diffHash = context.options.data.diff || context.options.hash.diff
+
+	if (!diffHash && !diffItems) {
+		return mapDescriptor(context, callback)
+  }
+
+  const _context = {
+    ...context,
+    options: {
+      ...context.options,
+      hash: {
+        ...context.options.hash
+      },
+      data: {
+        ...context.options.data
+      }
+    }
+  }
+  _context.options.hash.diff && delete _context.options.hash.diff
+  _context.options.data.diff && delete _context.options.data.diff
+  console.error(_context.options.hash.name)
+
+  if (!diffHash && diffItems) {
+    const oldItems = diffItems.map(
+      diffItem => mapDescriptor({ ...diffItem, options: _context.options }, applyAsOld(returnValue))
+    ).flat(Infinity)
+    const newItems = mapDescriptor(_context, applyAsNew(returnValue))
+    return [newItems, oldItems].flat(Infinity).map(applyDiff(_context, oldItems, newItems, diffHash, callback))
+  }
+
+  if (diffHash && !diffItems) {
+    console.error(_context.options.data)
+    const diffHashContext = {
+      ..._context,
+      options: {
+        ..._context.options,
+        hash: {
+          ..._context.options.hash,
+          name: diffHash,
+        }
+      }
+    }
+    const items = mapDescriptor(
+      diffHashContext,
+      matchHash(diffHashContext, applyAsOld(returnValue), applyAsNew(returnValue))
+    )
+    const oldItems = items.filter(_ => _.options.data.old)
+    const newItems = items.filter(_ => _.options.data.new)
+    return items.map(applyDiff(_context, oldItems, newItems, diffHash, callback))
+  }
+
+  if (diffHash && diffItems) {
+    const oldItems = diffItems.map(
+      diffItem => {
+        const diffHashContext = {
+          ...diffItem,
+          options: {
+            ...diffItem.options,
+            hash: {
+              ..._context.options.hash
+            },
+            data: {
+              ...diffItem.options.data,
+            }
+          }
+        }
+        return mapDescriptor(
+          diffHashContext,
+          applyAsOld(returnValue)
+        )
+      }
+    )
+    const newItems = mapDescriptor(_context, applyAsNew(returnValue))
+    return [newItems, oldItems].flat(Infinity).map(applyDiff(_context, oldItems, newItems, diffHash, callback))
+  }
+}
+
 module.exports.register = handlebars => {
 	handlebars.registerHelper('import', function (options) {
-		return mapDescriptor({descriptor: this, options}, applyOptions({descriptor: this, options})).join('\n')
+		return mapDescriptorWithDiff({descriptor: this, options}, applyOptions({descriptor: this, options})).join('\n')
 	})
 	handlebars.registerHelper('file', function (options) {
-		return mapDescriptor({descriptor: this, options}, applyOptions({descriptor: this, options})).join('\n')
+		return mapDescriptorWithDiff({descriptor: this, options}, applyOptions({descriptor: this, options})).join('\n')
 	})
 	handlebars.registerHelper('package', function (options) {
-		return mapDescriptor({descriptor: this, options}, applyOptions({descriptor: this, options})).join('\n')
+		return mapDescriptorWithDiff({descriptor: this, options}, applyOptions({descriptor: this, options})).join('\n')
 	})
 	handlebars.registerHelper('enum', function (options) {
-		return mapDescriptor({descriptor: this, options}, applyOptions({descriptor: this, options})).join('\n')
+		return mapDescriptorWithDiff({descriptor: this, options}, applyOptions({descriptor: this, options})).join('\n')
 	})
 	handlebars.registerHelper('value', function (options) {
-		return mapDescriptor({descriptor: this, options}, applyOptions({descriptor: this, options})).join('\n')
+		return mapDescriptorWithDiff({descriptor: this, options}, applyOptions({descriptor: this, options})).join('\n')
 	})
 	handlebars.registerHelper('message', function (options) {
-		return mapDescriptor({descriptor: this, options}, applyOptions({descriptor: this, options})).join('\n')
+		return mapDescriptorWithDiff({descriptor: this, options}, applyOptions({descriptor: this, options})).join('\n')
 	})
 	handlebars.registerHelper('nested', function (options) {
-		return mapDescriptor({descriptor: this, options}, applyOptions({descriptor: this, options})).join('\n')
+		return mapDescriptorWithDiff({descriptor: this, options}, applyOptions({descriptor: this, options})).join('\n')
 	})
 	handlebars.registerHelper('field', function (options) {
-		return mapDescriptor({descriptor: this, options}, applyOptions({descriptor: this, options})).join('\n')
+		return mapDescriptorWithDiff({descriptor: this, options}, applyOptions({descriptor: this, options})).join('\n')
 	})
 	handlebars.registerHelper('oneof', function (options) {
-		return mapDescriptor({descriptor: this, options}, applyOptions({descriptor: this, options})).join('\n')
+		return mapDescriptorWithDiff({descriptor: this, options}, applyOptions({descriptor: this, options})).join('\n')
 	})
 	handlebars.registerHelper('option', function (options) {
-		return mapDescriptor({descriptor: this, options}, applyOptions({descriptor: this, options})).join('\n')
+		return mapDescriptorWithDiff({descriptor: this, options}, applyOptions({descriptor: this, options})).join('\n')
 	})
 	handlebars.registerHelper('service', function (options) {
-		return mapDescriptor({descriptor: this, options}, applyOptions({descriptor: this, options})).join('\n')
+		return mapDescriptorWithDiff({descriptor: this, options}, applyOptions({descriptor: this, options})).join('\n')
 	})
 	handlebars.registerHelper('rpc', function (options) {
-		return mapDescriptor({descriptor: this, options}, applyOptions({descriptor: this, options})).join('\n')
+		return mapDescriptorWithDiff({descriptor: this, options}, applyOptions({descriptor: this, options})).join('\n')
 	})
 	handlebars.registerHelper('extension', function (options) {
-		return mapDescriptor({descriptor: this, options}, applyOptions({descriptor: this, options})).join('\n')
+		return mapDescriptorWithDiff({descriptor: this, options}, applyOptions({descriptor: this, options})).join('\n')
 	})
 }

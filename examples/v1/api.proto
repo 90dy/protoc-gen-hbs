@@ -30,7 +30,18 @@ message SyncRequest {
 	bytes payload = 2;
 }
 
+message SyncResponse {
+	enum Operation {
+		UNKNOWN = 0;
+		CREATED = 1;
+		UPDATED = 2;
+		DELETED = 3;
+	}
+	Operation operation = 1;
+	bytes payload = 2;
+}
+
 service Service {
 	rpc Auth(AuthRequest) returns (AuthResponse);
-	rpc Sync(stream SyncRequest) returns (stream SyncRequest);
+	rpc Sync(stream SyncRequest) returns (stream SyncResponse);
 }

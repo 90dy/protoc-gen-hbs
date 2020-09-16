@@ -94,6 +94,7 @@ try {
 			throw error
 		}
 	})
+  // console.error(templates)
 
 	// create generated files
 	const generatedFiles = {}
