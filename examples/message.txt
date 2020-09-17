@@ -1,0 +1,366 @@
+
+// Display messages name
+
+// Display messages name with scope
+  v1.api.AuthRequest
+
+// Do the same as above
+
+// Get nested messages
+  v1.api.AuthRequest
+
+// Or
+
+// Get nested messages recursively
+
+// Do the same
+  v1.api.AuthRequest
+  
+    // @first is true for the first message of each messages scope
+    // @last is true for the last message of each messages scope
+
+// Filter by name
+  v1.api.AuthRequest
+
+
+// Display messages name
+
+// Display messages name with scope
+  v1.api.AuthResponse
+
+// Do the same as above
+
+// Get nested messages
+  v1.api.AuthResponse
+
+// Or
+
+// Get nested messages recursively
+
+// Do the same
+  v1.api.AuthResponse
+  
+    // @first is true for the first message of each messages scope
+    // @last is true for the last message of each messages scope
+
+// Filter by name
+  v1.api.AuthResponse
+
+
+// Display messages name
+
+// Display messages name with scope
+  v1.api.SyncRequest
+
+// Do the same as above
+
+// Get nested messages
+  v1.api.SyncRequest
+
+// Or
+
+// Get nested messages recursively
+
+// Do the same
+  v1.api.SyncRequest
+  
+    // @first is true for the first message of each messages scope
+    // @last is true for the last message of each messages scope
+
+// Filter by name
+  v1.api.SyncRequest
+
+
+// Display messages name
+
+// Display messages name with scope
+  v1.api.SyncResponse
+
+// Do the same as above
+
+// Get nested messages
+  v1.api.SyncResponse
+
+// Or
+
+// Get nested messages recursively
+
+// Do the same
+  v1.api.SyncResponse
+  
+    // @first is true for the first message of each messages scope
+    // @last is true for the last message of each messages scope
+
+// Filter by name
+  v1.api.SyncResponse
+
+
+// Display messages name
+
+// Display messages name with scope
+  examples.Hello
+
+// Do the same as above
+
+// Get nested messages
+  examples.Hello
+
+// Or
+  World
+
+  There
+
+// Get nested messages recursively
+  World
+    // @last is true for the first message of the entire list
+
+  There
+    // @last is true for the last message of the entire list
+
+// Do the same
+  examples.Hello
+  
+// Display messages name
+
+// Display messages name with scope
+  World
+
+// Do the same as above
+
+// Get nested messages
+  World
+
+// Or
+
+// Get nested messages recursively
+
+// Do the same
+  World
+  
+    // @first is true for the first message of each messages scope
+    // @last is true for the last message of each messages scope
+
+// Filter by name
+  World
+
+
+// Display messages name
+
+// Display messages name with scope
+  There
+
+// Do the same as above
+
+// Get nested messages
+  There
+
+// Or
+
+// Get nested messages recursively
+
+// Do the same
+  There
+  
+    // @first is true for the first message of each messages scope
+    // @last is true for the last message of each messages scope
+
+// Filter by name
+  There
+
+    // @first is true for the first message of each messages scope
+    // @last is true for the last message of each messages scope
+
+// Filter by name
+  examples.Hello
+
+
+// Display messages name
+
+// Display messages name with scope
+  v2.api.AuthRequest
+
+// Do the same as above
+
+// Get nested messages
+  v2.api.AuthRequest
+
+// Or
+
+// Get nested messages recursively
+
+// Do the same
+  v2.api.AuthRequest
+  
+    // @first is true for the first message of each messages scope
+    // @last is true for the last message of each messages scope
+
+// Filter by name
+  v2.api.AuthRequest
+
+
+// Display messages name
+
+// Display messages name with scope
+  v2.api.AuthResponse
+
+// Do the same as above
+
+// Get nested messages
+  v2.api.AuthResponse
+
+// Or
+
+// Get nested messages recursively
+
+// Do the same
+  v2.api.AuthResponse
+  
+    // @first is true for the first message of each messages scope
+    // @last is true for the last message of each messages scope
+
+// Filter by name
+  v2.api.AuthResponse
+
+
+// Display messages name
+
+// Display messages name with scope
+  v2.api.SyncRequest
+
+// Do the same as above
+
+// Get nested messages
+  v2.api.SyncRequest
+
+// Or
+
+// Get nested messages recursively
+
+// Do the same
+  v2.api.SyncRequest
+  
+    // @first is true for the first message of each messages scope
+    // @last is true for the last message of each messages scope
+
+// Filter by name
+  v2.api.SyncRequest
+
+
+// Display messages name
+
+// Display messages name with scope
+  v2.api.QueryRequest
+
+// Do the same as above
+
+// Get nested messages
+  v2.api.QueryRequest
+
+// Or
+
+// Get nested messages recursively
+
+// Do the same
+  v2.api.QueryRequest
+  
+    // @first is true for the first message of each messages scope
+    // @last is true for the last message of each messages scope
+
+// Filter by name
+  v2.api.QueryRequest
+
+
+// Display messages name
+
+// Display messages name with scope
+  v2.api.QueryResponse
+
+// Do the same as above
+
+// Get nested messages
+  v2.api.QueryResponse
+
+// Or
+
+// Get nested messages recursively
+
+// Do the same
+  v2.api.QueryResponse
+  
+    // @first is true for the first message of each messages scope
+    // @last is true for the last message of each messages scope
+
+// Filter by name
+  v2.api.QueryResponse
+
+
+// Display messages name
+
+// Display messages name with scope
+  v2.api.MutationRequest
+
+// Do the same as above
+
+// Get nested messages
+  v2.api.MutationRequest
+
+// Or
+
+// Get nested messages recursively
+
+// Do the same
+  v2.api.MutationRequest
+  
+    // @first is true for the first message of each messages scope
+    // @last is true for the last message of each messages scope
+
+// Filter by name
+  v2.api.MutationRequest
+
+
+// Display messages name
+
+// Display messages name with scope
+  v2.api.MutationResponse
+
+// Do the same as above
+
+// Get nested messages
+  v2.api.MutationResponse
+
+// Or
+
+// Get nested messages recursively
+
+// Do the same
+  v2.api.MutationResponse
+  
+    // @first is true for the first message of each messages scope
+    // @last is true for the last message of each messages scope
+
+// Filter by name
+  v2.api.MutationResponse
+
+
+// Display messages name
+
+// Display messages name with scope
+  example.Void
+
+// Do the same as above
+
+// Get nested messages
+  example.Void
+
+// Or
+
+// Get nested messages recursively
+
+// Do the same
+  example.Void
+  
+    // @first is true for the first message of each messages scope
+    // @last is true for the last message of each messages scope
+
+// Filter by name
+  example.Void
