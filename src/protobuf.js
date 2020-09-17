@@ -648,7 +648,6 @@ const isDiff = (a, diffHash) => (b) => {
 }
 
 const applyDiff = (context, oldItems, newItems, diffHash, callback) => {
-  console.error(oldItems.map(_ => _.options.data.name))
 	return (item, index, array) => {
     let diffItems = item.options.data.new
 			? oldItems.filter(isDiff(item, diffHash))
@@ -708,7 +707,6 @@ const mapDescriptorWithDiff = (context, callback) => {
   }
   _context.options.hash.diff && delete _context.options.hash.diff
   _context.options.data.diff && delete _context.options.data.diff
-  console.error(_context.options.hash.name)
 
   if (!diffHash && diffItems) {
     const oldItems = diffItems.map(
@@ -719,7 +717,6 @@ const mapDescriptorWithDiff = (context, callback) => {
   }
 
   if (diffHash && !diffItems) {
-    console.error(_context.options.data)
     const diffHashContext = {
       ..._context,
       options: {
