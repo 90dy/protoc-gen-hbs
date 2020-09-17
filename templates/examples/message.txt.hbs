@@ -20,9 +20,9 @@
 // Get nested messages
 {{#message}}
   {{@name}}
-  {{#nested}}
+  {{#message}}
     {{@message.name}}.{{@name}}
-  {{/nested}}
+  {{/message}}
 {{/message}}
 
 // Or

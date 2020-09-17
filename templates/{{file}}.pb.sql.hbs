@@ -1,17 +1,17 @@
 {{#*inline "create_table"}}
-CREATE TABLE {{snake @message.name}} {
+CREATE TABLE {{snake @name}} {
 	{{> @partial-block}}
 };
 {{/inline}}
 
 {{#*inline "alter_table"}}
-ALTER TABLE {{snake @message.name}} {
+ALTER TABLE {{snake @mname}} {
 	{{> @partial-block}}
 };
 {{/inline}}
 
 {{#*inline "delete_table"}}
-DELETE TABLE {{snake @message.name}};
+DELETE TABLE {{snake @name}};
 {{/inline}}
 
 {{~#*inline "type"}}
@@ -35,33 +35,36 @@ DELETE TABLE {{snake @message.name}};
 	DROP COLUMN {{snake @field.name}};
 {{/inline}}
 
+file: {{@name}}
 {{#package}}
+  file package: {{@name}}
   {{#with @root}}
-    {{#package name=@package.name diff="v1.*"}}
-      {{@name}}
-    	{{#message}}
-        {{@name}}
-    		{{#if @created}}
-    			{{#> create_table}}
-    				{{#field}}
-    					{{~> create_column}}
-    				{{/field}}
-    			{{/create_table}}
-    		{{else if @deleted}}
-    			{{~> delete_table}}
-    		{{else if @updated}}
-    			{{#> alter_table}}
-    				{{#field}}
-    					{{#if @created}}
-    						{{~> add_column}}
-    					{{else if @deleted}}
-    						{{~> drop_column}}
-    					{{/if}}
-    				{{/field}}
-    			{{/alter_table}}
-    		{{/if}}
-    		{{@message.recursive}}
-    	{{/message}}
+    {{#package name=@package.name diff="v1" recursive=true}}
+      package iterated: {{@name}} {{#if @old}}old{{else if @new}}new{{/if}}
+      {{#file name=@file.name}}
+    	  {{#message recursive=true}}
+          message: {{@name}} {{#if @old}}old{{else if @new}}new{{/if}}
+    	  	{{#if @created}}
+    	  		{{#> create_table}}
+    	  			{{#field}}
+    	  				{{~> create_column}}
+    	  			{{/field}}
+    	  		{{/create_table}}
+    	  	{{else if @deleted}}
+    	  		{{~> delete_table}}
+    	  	{{else if @updated}}
+    	  		{{#> alter_table}}
+    	  			{{#field}}
+    	  				{{#if @created}}
+    	  					{{~> add_column}}
+    	  				{{else if @deleted}}
+    	  					{{~> drop_column}}
+    	  				{{/if}}
+    	  			{{/field}}
+    	  		{{/alter_table}}
+    	  	{{/if}}
+    	  {{/message}}
+      {{/file}}
     {{/package}}
   {{/with}}
 {{/package}}

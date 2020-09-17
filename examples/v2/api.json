@@ -2,44 +2,30 @@
 {
     "AuthRequest": {
         "name": "string",
-
         "password": "string"
     },
-
     "AuthResponse": {
         "code": "enum",
-
         "token": "string"
     },
-
     "SyncRequest": {
         "operation": "enum",
-
         "payload": "bytes"
     },
-
     "QueryRequest": {
         "id": "uint64",
-
         "filter": "string"
     },
-
     "QueryResponse": {
         "id": "uint64",
-
         "data": "string"
     },
-
     "MutationRequest": {
         "id": "uint64",
-
         "payload": "string"
     },
-
     "MutationResponse": {
         "id": "uint64",
-
         "payload": "string"
     }
 }
-

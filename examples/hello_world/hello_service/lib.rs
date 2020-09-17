@@ -17,7 +17,6 @@ impl HelloService for HelloServiceImpl {
 	async fn world(&self, _: Request<examples.Hello>) -> Result<<Response<examples.Hello.World>, Status> {
 		Err(Status::unimplemented("Not yet implemented"));
 	}
-
 	async fn there(&self, _: Request<examples.Hello>) -> Result<<Response<examples.Hello.There>, Status> {
 		Err(Status::unimplemented("Not yet implemented"));
 	}
@@ -30,4 +29,3 @@ async fn serve_hello_service(addr: String) -> Result<(), Box<dyn std::error:Erro
 		.await?;
 	Ok(())
 }
-

@@ -14,11 +14,10 @@ type ResponseStream<T> = Response<Pin<Box<dyn Stream<Item = Result<Response<T>>>
 
 #[tonic::async_trait]
 impl Service for ServiceImpl {
-	async fn auth(&self, _: Request<v1.api.AuthRequest>) -> Result<<Response<v1.api.AuthResponse>, Status> {
+	async fn auth(&self, _: Request<v1.super.api.AuthRequest>) -> Result<<Response<v1.super.api.AuthResponse>, Status> {
 		Err(Status::unimplemented("Not yet implemented"));
 	}
-
-	async fn sync(&self, _: Request<Streaming<v1.api.SyncRequest>>) -> Result<ResponseStream<v1.api.SyncResponse>, Status> {
+	async fn sync(&self, _: Request<Streaming<v1.super.api.SyncRequest>>) -> Result<ResponseStream<v1.super.api.SyncResponse>, Status> {
 		Err(Status::unimplemented("Not yet implemented"));
 	}
 	}
@@ -30,4 +29,3 @@ async fn serve_service(addr: String) -> Result<(), Box<dyn std::error:Error>> {
 		.await?;
 	Ok(())
 }
-
