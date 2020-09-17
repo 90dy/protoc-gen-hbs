@@ -1,0 +1,61 @@
+// Display messages name
+{{#package}}
+  {{#message}}
+    {{@name}}
+  {{/message}}
+{{/package}}
+
+// Display messages name with scope
+{{#message}}
+  {{@name}}
+{{/message}}
+
+// Do the same as above
+{{#package}}
+  {{#message}}
+    {{@package.name}}.{{@name}}
+  {{/message}}
+{{/package}}
+
+// Get nested messages
+{{#message}}
+  {{@name}}
+  {{#nested}}
+    {{@message.name}}.{{@name}}
+  {{/nested}}
+{{/message}}
+
+// Or
+{{#message nested=true}}
+  {{@name}}
+{{/message}}
+
+// Get nested messages recursively
+{{#message recursive=true}}
+  {{@name}}
+  {{#if @first}}
+    // @last is true for the first message of the entire list
+  {{/if}}
+  {{#if @last}}
+    // @last is true for the last message of the entire list
+  {{/if}}
+{{/message}}
+
+// Do the same
+{{#message}}
+  {{@name}}
+  {{@recursive}}
+  {{#if @first}}
+    // @first is true for the first message of each messages scope
+  {{/if}}
+  {{#if @last}}
+    // @last is true for the last message of each messages scope
+  {{/if}}
+{{/message}}
+
+// Filter by name
+{{#message name="google.protobuf.Timestamp"}}
+  google.protobuf.Timestamp filtered
+{{else}}
+  {{@name}}
+{{/message}}

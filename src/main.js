@@ -74,14 +74,14 @@ try {
 			'{{$1@$2.name}}'
 		).replace(/.hbs$/, '') + '\n'
 		template.content = fs.readFileSync(template.path, 'utf8')
+		template.delimiterStart = 'PROTOC_GEN_HBS_GENERATED_FILE:' + sha1(template.content) + ':' + template.contentName
 		template.delimiter = 'PROTOC_GEN_HBS_GENERATED_FILE:' + sha1(template.content) + ':' + template.contentName
 		template.mergedContent =
 			template.start +
-				template.delimiter +
-				template.content +
-				template.end
+			template.delimiter +
+			template.content +
+			template.end
 		try {
-			// console.error(template)
 			template.result = compileMustaches(
 				request,
 				template.mergedContent,
@@ -103,9 +103,11 @@ try {
 			'PROTOC_GEN_HBS_GENERATED_FILE:' + sha1(template.content) + ':'
 		).filter(_ => _ !== '')
 		list.forEach(content => {
-			const filename = content.split('\n')[0]
+			const [filename] = content.split('\n')
 			if (filename != '') {
-				generatedFiles[filename] = content.replace(new RegExp('^' + filename), '')
+        generatedFiles[filename] = generatedFiles[filename]
+          ? generatedFiles[filename] + content.replace(new RegExp('^' + filename), '')
+          : content.replace(new RegExp('^' + filename), '')
 			}
 		})
 	})
