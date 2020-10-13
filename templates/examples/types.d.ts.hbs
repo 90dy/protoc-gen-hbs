@@ -1,0 +1,23 @@
+{{#package}}
+namespace {{@name}} {
+  {{#message}}
+    class {{@name}} {
+    }
+    namespace {{@name}} {
+      {{@recursive}}
+    }
+  {{/message}}
+  {{#service}}
+    class {{@name}} {
+      {{#rpc client="unary" server="unary"}}
+        async {{@name}}({{@input}}): {{@output}}
+      {{else rpc client="stream" server="unary"}}
+        async {{@name}}({{@input}}): {{@output}}
+      {{else rpc client="stream" server="stream"}}
+        async {{@name}}({{@input}}): {{@output}}
+      {{/rpc}}
+    }
+  {{~/service}}
+  {{@recursive}}
+}
+{{/package}}

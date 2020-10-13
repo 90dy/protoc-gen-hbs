@@ -1,17 +1,7 @@
 {{#*inline "create_table"}}
-CREATE TABLE {{snake @message.name}} {
+CREATE TABLE {{snake @package.name}}_{{snake @name}} {
 	{{> @partial-block}}
 };
-{{/inline}}
-
-{{#*inline "alter_table"}}
-ALTER TABLE {{snake @message.name}} {
-	{{> @partial-block}}
-};
-{{/inline}}
-
-{{#*inline "delete_table"}}
-DELETE TABLE {{snake @message.name}};
 {{/inline}}
 
 {{~#*inline "type"}}
@@ -27,41 +17,12 @@ DELETE TABLE {{snake @message.name}};
 	CREATE COLUMN {{snake @field.name}} {{> type}};
 {{/inline}}
 
-{{#*inline "add_column"}}
-	ADD COLUMN {{snake @field.name}};
-{{/inline}}
-
-{{#*inline "drop_column"}}
-	DROP COLUMN {{snake @field.name}};
-{{/inline}}
-
 {{#package}}
-  {{#with @root}}
-    {{#package name=@package.name diff="v1.*"}}
-      {{@name}}
-    	{{#message}}
-        {{@name}}
-    		{{#if @created}}
-    			{{#> create_table}}
-    				{{#field}}
-    					{{~> create_column}}
-    				{{/field}}
-    			{{/create_table}}
-    		{{else if @deleted}}
-    			{{~> delete_table}}
-    		{{else if @updated}}
-    			{{#> alter_table}}
-    				{{#field}}
-    					{{#if @created}}
-    						{{~> add_column}}
-    					{{else if @deleted}}
-    						{{~> drop_column}}
-    					{{/if}}
-    				{{/field}}
-    			{{/alter_table}}
-    		{{/if}}
-    		{{@message.recursive}}
-    	{{/message}}
-    {{/package}}
-  {{/with}}
+  {{#message recursive=true}}
+  	{{#> create_table}}
+  		{{#field}}
+  			{{~> create_column}}
+  		{{/field}}
+  	{{/create_table}}
+  {{/message}}
 {{/package}}

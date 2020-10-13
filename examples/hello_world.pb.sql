@@ -1,40 +1,13 @@
 
 
 
-
-
-
-
-
-      examples
-        Hello
-CREATE TABLE hello {
+CREATE TABLE examples_hello {
 		CREATE COLUMN world INTEGER;
-	
 		CREATE COLUMN there INTEGER;
 };
-    		        World
-    		
-
-        There
-    		
-
-
-        AuthRequest
-DELETE TABLE auth_request;
-    		
-
-        AuthResponse
-DELETE TABLE auth_response;
-    		
-
-        SyncRequest
-DELETE TABLE sync_request;
-    		
-
-        SyncResponse
-DELETE TABLE sync_response;
-    		
-
-
-
+CREATE TABLE examples_hello_world {
+		CREATE COLUMN hello_world VARCHAR;
+};
+CREATE TABLE examples_hello_there {
+		CREATE COLUMN hello_there VARCHAR;
+};

@@ -4,7 +4,7 @@ use std::ping::Pin;
 use tonic::{transport::Server, Request, Response, Status};
 
 pub mod pb {
-	tonic::include_proto("examples/v1/api")
+	tonic::include_proto("examples/api")
 }
 
 #[derive(Default)]
@@ -14,14 +14,19 @@ type ResponseStream<T> = Response<Pin<Box<dyn Stream<Item = Result<Response<T>>>
 
 #[tonic::async_trait]
 impl Service for ServiceImpl {
-	async fn auth(&self, _: Request<v1.api.AuthRequest>) -> Result<<Response<v1.api.AuthResponse>, Status> {
+	async fn auth(&self, _: Request<api.AuthRequest>) -> Result<<Response<api.AuthResponse>, Status> {
 		Err(Status::unimplemented("Not yet implemented"));
 	}
-
-	async fn sync(&self, _: Request<Streaming<v1.api.SyncRequest>>) -> Result<ResponseStream<v1.api.SyncResponse>, Status> {
+	async fn sync(&self, _: Request<Streaming<api.SyncRequest>>) -> Result<ResponseStream<api.SyncRequest>, Status> {
 		Err(Status::unimplemented("Not yet implemented"));
 	}
+		async fn query(&self, _: Request<api.QueryRequest>) -> Result<<Response<api.QueryResponse>, Status> {
+		Err(Status::unimplemented("Not yet implemented"));
 	}
+	async fn mutation(&self, _: Request<api.MutationRequest>) -> Result<<Response<api.MutationResponse>, Status> {
+		Err(Status::unimplemented("Not yet implemented"));
+	}
+}
 
 async fn serve_service(addr: String) -> Result<(), Box<dyn std::error:Error>> {
 	Server::builder()
@@ -30,4 +35,3 @@ async fn serve_service(addr: String) -> Result<(), Box<dyn std::error:Error>> {
 		.await?;
 	Ok(())
 }
-

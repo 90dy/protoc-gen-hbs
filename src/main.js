@@ -39,6 +39,8 @@ try {
 	requestUint8Array.set(requestBuffer)
 
 	const request = CodeGeneratorRequest.deserializeBinary(requestUint8Array)
+  // TODO: Add all included files with request.setProtoFileList
+  // console.error(request.getProtoFileList().map( _ => _.getName()))
 
 	// get templates
 	const templates = {
