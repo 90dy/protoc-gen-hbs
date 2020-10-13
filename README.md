@@ -76,11 +76,6 @@ Protobuf helpers was thought as easy to use as possible
 {{#file}}
   {{@name}}
 {{/file}}
-
-// You can iterate over all file included (not only file from input)
-{{#file all}}
-  {{@name}}
-{{/file}}
 ```
 
 ##### [{{import}}](templates/examples/import.ts.hbs)
@@ -94,13 +89,29 @@ include "{{@name}}.pb.h"
 ##### [{{package}}](templates/examples/package.ts.hbs)
 
 ```handlebars
+// get root packages
 {{#package}}
 namespace {{@name}} {
-  // will add nested message, enum and fields
+  // ...
 }
 {{/package}}
 
-{{#package name="google.*"}}
+// get all packages
+{{#package recursive=true}}
+namespace {{@name}} {
+  // ...
+}
+{{/package}}
+
+// get all packages recursively in their scope
+{{#package}}
+namespace {{@name}} {
+  {{@recursive}}
+}
+{{/recursive}}
+
+// filter by name
+{{#package name="google*" recursive=true}}
   // {{@name}}
 {{else}}
   // ...
@@ -148,7 +159,7 @@ class {{@name}} {}
 {{/message}}
 
 // Or recursively as param
-{{#message recursive}}
+{{#message recursive=true}}
   {{@name}}
   {{@last}}
 {{/message}}
@@ -249,17 +260,6 @@ interface {{@name}} {
     {{@jsonName}}
   {{/field}}
 {{/message}}
-```
-
-##### Diff
-
-```handlerbars
-// You can compare things too, useful for versioning
-{{#package name="v2" diff="v1"}}
-  {{#message created}}
-    
-  {{/message}}
-{{/package}}
 ```
 
 #### Others
