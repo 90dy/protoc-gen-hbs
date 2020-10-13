@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package v1.super.api;
+package api;
 
 message AuthRequest {
 	string name = 1;
@@ -30,18 +30,29 @@ message SyncRequest {
 	bytes payload = 2;
 }
 
-message SyncResponse {
-	enum Operation {
-		UNKNOWN = 0;
-		CREATED = 1;
-		UPDATED = 2;
-		DELETED = 3;
-	}
-	Operation operation = 1;
-	bytes payload = 2;
+message QueryRequest {
+  uint64 id = 1;
+  string filter = 2;
+}
+
+message QueryResponse {
+  uint64 id = 1;
+  string data = 2;
+}
+
+message MutationRequest {
+  uint64 id = 1;
+  string payload = 2;
+}
+
+message MutationResponse {
+  uint64 id = 1;
+  string payload = 2;
 }
 
 service Service {
 	rpc Auth(AuthRequest) returns (AuthResponse);
-	rpc Sync(stream SyncRequest) returns (stream SyncResponse);
+	rpc Sync(stream SyncRequest) returns (stream SyncRequest);
+  rpc Query(QueryRequest) returns (QueryResponse);
+  rpc Mutation(MutationRequest) returns (MutationResponse);
 }

@@ -2,50 +2,36 @@
 // Display messages name
 
 // Display messages name with scope
+  World
+  There
 
 // Do the same as above
 
 // Get nested messages
+  World
+  There
 
 // Or
+  examples.Hello.World
+  examples.Hello.There
 
 // Get nested messages recursively
+  examples.Hello.World
+    // @last is true for the first message of the entire list
+  examples.Hello.There
+    // @last is true for the last message of the entire list
 
 // Do the same
+  World
+  
+    // @first is true for the first message of each messages scope
+  There
+  
+    // @last is true for the last message of each messages scope
 
 // Filter by name
-
-// Display messages name
-
-// Display messages name with scope
-
-// Do the same as above
-
-// Get nested messages
-
-// Or
-
-// Get nested messages recursively
-
-// Do the same
-
-// Filter by name
-
-// Display messages name
-
-// Display messages name with scope
-
-// Do the same as above
-
-// Get nested messages
-
-// Or
-
-// Get nested messages recursively
-
-// Do the same
-
-// Filter by name
+  World
+  There
 
 // Display messages name
 
