@@ -1,6 +1,6 @@
 # protoc-gen-hbs
 
-🏃‍♀️ Easy and Fast Protobuf Generation with Handlebars and some Helpers
+🏃‍♀️ Easy and Fast Templating for Protobuf Generation with Handlebars and some Helpers
 
 ## Why ?
 
