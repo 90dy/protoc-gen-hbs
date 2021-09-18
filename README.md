@@ -139,11 +139,11 @@ class {{@name}} {}
 {{/message}}
 
 // Is equal to
-{{#service}}
+{{#package}}
   {{#message}}
   {{@service.name}}.{{@name}}
   {{/message}}
-{{/service}}
+{{/package}}
 
 // You can access nested message this way
 {{#message}}
@@ -161,7 +161,6 @@ class {{@name}} {}
 // Or recursively as param
 {{#message recursive=true}}
   {{@name}}
-  {{@last}}
 {{/message}}
 ```
 
@@ -239,6 +238,16 @@ interface {{@name}} {
 {{/rpc}}
 ```
 
+```
+{{#service}}
+  const {{@service.name}} = {
+    {{#rpc}}
+      {{@name}}: (request: {{@input}}, (response: {{@output}} => void): Promise<void>
+    {{/rpc}}
+  }
+{{/service}}
+```
+
 ##### [{{option}}](templates/examples/option.ts.hbs)
 
 ```handlebars
@@ -269,10 +278,13 @@ For helpers not related with protobuf
 * All [handlebars-helpers](helpers/handlebars-helpers) have been included
 * Better string case helpers have been added too (see [here](src/case.js))
 
-
 ## Contributing
 
 Make PRs and have fun 👻
+
+## Issues
+
+No rules, if you see anything weird, [open an issue](https://github.com/90dy/protoc-gen-hbs/issues/new/choose) :)
 
 ## Examples
 
