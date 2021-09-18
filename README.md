@@ -236,9 +236,7 @@ interface {{@name}} {
   // TODO: convert input and output type
   const {{@name}} = (request: {{@input}}, (response: {{@output}} => void): Promise<void>
 {{/rpc}}
-```
 
-```
 {{#service}}
   const {{@service.name}} = {
     {{#rpc}}
