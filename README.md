@@ -108,7 +108,7 @@ namespace {{@name}} {
 namespace {{@name}} {
   {{@recursive}}
 }
-{{/recursive}}
+{{/package}}
 
 // filter by name
 {{#package name="google*" recursive=true}}
