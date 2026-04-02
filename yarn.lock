@@ -2,7 +2,7 @@
 # Manual changes might be lost - proceed with caution!
 
 __metadata:
-  version: 4
+  version: 6
   cacheKey: 4
 
 "@types/color-name@npm:^1.1.1":
@@ -1343,12 +1343,12 @@ __metadata:
   linkType: hard
 
 "lodash.template@npm:^4.4.0":
-  version: 4.5.0
-  resolution: "lodash.template@npm:4.5.0"
+  version: 4.18.1
+  resolution: "lodash.template@npm:4.18.1"
   dependencies:
     lodash._reinterpolate: ^3.0.0
     lodash.templatesettings: ^4.0.0
-  checksum: e27068e20b7a374938c20ab76a093dd49e9626bfbe1882d9d05d81efefe3210cfcd6ad24f1cb0d956ce57d75855fec17bd386a4aa54762a144bd7c0891ee7ee1
+  checksum: 8/9c1f2bd844344d1cc9658d3d31451f00b5adcded6d745319194df97b9d6e469333ea280b3e01a60d3a5254c4db6937e53902759456ea45ae086ed063d3e8e848
   languageName: node
   linkType: hard
 
@@ -1997,13 +1997,13 @@ typescript@latest:
   languageName: node
   linkType: hard
 
-"typescript@patch:typescript@latest#builtin<compat/typescript>":
+"typescript@patch:typescript@latest#~builtin<compat/typescript>":
   version: 3.9.3
-  resolution: "typescript@patch:typescript@npm%3A3.9.3#builtin<compat/typescript>::version=3.9.3&hash=64df9d"
+  resolution: "typescript@patch:typescript@npm%3A3.9.3#~builtin<compat/typescript>::version=3.9.3&hash=3bd3d3"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: 9fefeb14e5facf55be95b5256ddb36810e41f4e3c5ec93268e8228bcc463caa50e8f94902f3caa168f818c83a3142cc25ab70eeab58bdfdc2b2fb29c03e2c517
+  checksum: 8/63a402035e2c94a5f3a2358fb42bcbd8b133e2798256c7f91db1b9c6d94cba791adec36ddf983d97df64c22ccb265c27ae2477c7aaab7a12a017f932aa07645f
   languageName: node
   linkType: hard
 
